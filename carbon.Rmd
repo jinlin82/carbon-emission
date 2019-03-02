@@ -24,11 +24,6 @@ output:
     latex_engine: xelatex
     md_extensions: +east_asian_line_breaks
     pandoc_args: ["--listing", "--filter", "pandoc-crossref"]
-  #bookdown::word_document2:
-   # fig_caption: true
-    #reference_docx: ./style/word-styles-02.docx
-    #md_extensions: +east_asian_line_breaks
-    #pandoc_args: ["--filter", "pandoc-crossref"]
 css: ./style/markdown.css
 autoEqnLabels: true
 eqnPrefixTemplate: ($$i$$)
