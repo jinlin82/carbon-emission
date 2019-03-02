@@ -11,7 +11,7 @@ output:
     theme: null
     md_extensions: +east_asian_line_breaks
     keep_md: true
-    toc: false
+    toc: true
     pandoc_args: ["--filter", "pandoc-crossref", "-M", "eqnPrefix="]
   bookdown::word_document2:
     fig_caption: true
