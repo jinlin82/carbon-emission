@@ -351,7 +351,7 @@ knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳价�
 结果带入训练好的模型中，就可以得到充分考虑历史信息的预测结果。在对数据进行标准化
 的基础上，利用已有样本357期数据进行神经网络模型的训练，其参数设置为误差参数为$10^{-7}$，
 学习次数10000次，神经元的个数为显著影响碳价变动的变量的数据8个，经过480次迭代后
-收敛于82.55，得到模型，根据结果对未来10期进行预测，具体预测结果如下。从图1得知， 
+收敛于82.55，得到模型，根据结果对未来10期进行预测，具体预测结果如下。从图 \@ref(fig:fig1) 得知， 
 基于灰色BP神经网络的碳价预测对于波动点的捕捉比较准确，且能够拟合出数据的波动，但
 从图中得知神经网络的拟合效果在某些区域表现不佳，准确性较低。 
 
@@ -362,7 +362,7 @@ knitr::kable(tab7, row.names =F, align = "l", caption="神经网络预测结果"
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig1,eval=T, echo=F,fig.cap="神经网络预测结果",dev="png"}
+```{r fig1,eval=T, echo=F,fig.cap="神经网络预测结果",dev="png",results='markup', cache=F}
 knitr::include_graphics(".\\result\\神经网络预测结果.png")
 ```
 
@@ -394,7 +394,7 @@ Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+ϵ_t	\\
 \quad \quad \quad \quad (0.37) \quad \quad (0.05)  \quad \quad \quad( 0.05 ) \quad \quad \quad(0.46) 
 \end{array}$$ {#eq:model8}
 
-根据上述绘制出图2发现，ARMA可加异常新息模型对于训练集样本拟合度
+根据上述绘制出图 \@ref(fig:fig2) 发现，ARMA可加异常新息模型对于训练集样本拟合度
 非常高，对未来10进行短期预测，预测结果显示未来10期碳价水平处于14元，并呈小幅度
 波动，处于平稳状态。
 
@@ -405,7 +405,7 @@ knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig2,eval=T, echo=F,fig.cap="ARMA模型预测效果图",dev="png"}
+```{r fig2,eval=T, echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
 knitr::include_graphics(".\\result\\ARMA模型预测效果图.png")
 ```
 
@@ -444,12 +444,12 @@ knitr::kable(tab9, row.names =F, align = "l", caption="Prophet模型预测结果
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig3,eval=T, echo=F,fig.cap="Prophet模型预测结果",dev="png"}
+```{r fig3,eval=T, echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
 knitr::include_graphics(".\\result\\Prophet模型预测结果.png")
 ```
 
-同时，对比Prophet模型预测的结果图3和灰色BP神经网络预测模型结果
-图4分析发现，整体上Prophet的模型拟合曲线比较平滑，清晰的描绘了
+同时，对比Prophet模型预测的结果图 \@ref(fig:fig3) 和灰色BP神经网络预测模型结果
+图 \@ref(fig:fig1) 分析发现，整体上Prophet的模型拟合曲线比较平滑，清晰的描绘了
 碳价格的整体趋势及变化规律。而从灰色BP神经网络预测模型的预测结果可以发现，
 拟合曲线与原始曲线的波动状态大致保持一致，且对于波动点的描绘较Prophet模型更具
 优势，较好的模拟了碳价的波动状态。从预测数据来看，灰色BP神经网络预测方法得到
@@ -467,9 +467,9 @@ knitr::include_graphics(".\\result\\Prophet模型预测结果.png")
 上预测的准确性，一般认为MAPE小于10，则模型的拟合精度较高。我们以2017年1月1日至
 2018年6月30日为训练集，以2018年7月1日-2018年9月30日为测试集，预测了未来60期的碳价，
 并根据上述原理分别采用灰色预测与BP神经网络组合预测模型、ARMA可加新息异常回归以及
-Prophet预测模型对碳价预测并计算MAPE值，具体结果如图4所示。
+Prophet预测模型对碳价预测并计算MAPE值，具体结果如图 \@ref(fig:fig4) 所示。
 
-```{r fig4,eval=T, echo=F,fig.cap="各模型平均绝对百分误差图",dev="png"}
+```{r fig4,eval=T, echo=F,fig.cap="各模型平均绝对百分误差图",dev="png",results='markup', cache=F}
 knitr::include_graphics(".\\result\\各模型平均绝对百分误差图.png")
 ```
 
