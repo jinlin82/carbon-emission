@@ -217,8 +217,8 @@ knitr::kable(tab3, row.names =F, align = "l", caption="平稳性检验",
 涨跌幅、道琼斯指数涨跌幅、德克萨斯原油增长率及纽卡斯尔煤炭价格增长率的系数压缩
 至0，总计剔除4个变量，剩余8个重要因子。
 
-```{r tab-4, eval=T, echo=F, results='markup', cache=F}  
-tab4 <- read.csv('.\\result\\变量选择结果表.csv')
+```{r tab-4, eval=T, echo=F, results='markup', cache=F}
+tab4 <- read.csv('./result/变量选择结果表.csv')
 knitr::kable(tab4, row.names =F, align = "l", caption="变量选择结果表",
              digits=3,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
@@ -284,7 +284,7 @@ p值小于0.0001,故强烈拒绝“无同期相关”的原假设，认为存在
 
 ```{r tab-5, eval=T, echo=F, results='markup', cache=F}  
 options(knitr.kable.NA="")
-tab5 <- read.csv('.\\result\\参数估计结果.csv')
+tab5 <- read.csv('./result/参数估计结果.csv')
 knitr::kable(tab5, row.names =F, align = "l", caption="参数估计结果",
              digits=4,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
@@ -420,7 +420,7 @@ knitr::include_graphics("./result/ARMA.png")
 为避免过拟合问题，设置改变点为25，且设置数据变动在5%的水平下受异常值得影响，
 建立模型得到：
 
-$$\begin{array}{1}
+$$\begin{array}{l}
 y(t)=g(t)+s(t)+\epsilon_t \\
 g\left( t \right) = ( - 0.45 + 0.03\alpha \left( {t{)^T}} \right)t + (0.91 + \alpha \left( {t{)^T}\gamma } \right)\\
 {\gamma _j} = \left( {{s_j} + 0.45 - \mathop \sum \limits_{l < j} {\gamma _l}} \right)\left( {1 - \frac{{ - 0.45 + \mathop \sum \nolimits_{l < j} {\delta _l}}}{{ - 0.45 + \mathop \sum \nolimits_{l \le j} {\delta _l}}}} \right)\\
@@ -446,7 +446,7 @@ knitr::kable(tab9, row.names =F, align = "l", caption="Prophet模型预测结果
 ```
 
 ```{r fig3,eval=T, echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
-knitr::include_graphics("./result/Prophet模型预测结果.png")
+knitr::include_graphics("./result/Prophet.png")
 ```
 
 同时，对比Prophet模型预测的结果图 \@ref(fig:fig3) 和灰色BP神经网络预测模型结果
