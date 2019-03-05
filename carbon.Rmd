@@ -319,7 +319,7 @@ knitr::kable(tab5, row.names =F, align = "l", caption="参数估计结果",
 的解释变量采用了不同的预测过程，对空气质量指数、国内煤炭价格及天然气价格采用直接建立
 灰色预测模型；对于碳效率变动率、国际碳价变动率及汇率变动率采用预测原始序列后，利用
 变动率公式进行计算得到；对于极端天气这一虚拟变量采用分别预测日最高温和日最低温，然后
-根据极端天气的规则进行判别是否处于极端天气中。
+根据极端天气的规则进行判/别是否处于极端天气中。
 
 因自变量较多，本文以AQI为例，说明灰色预测的过程：
 
@@ -342,7 +342,7 @@ $$\hat{X}^{(k+1)}=(e^{0.002}-1)[X^{(0)}(n)+\frac{82.27}{0.002}]e^{0.002k}$$ {#eq
 预测效果较好，这从侧面反映了灰色模型对于具有确定性趋势的序列预测效果更佳。
 
 ```{r tab-6, eval=T, echo=F, results='markup', cache=F}  
-tab6 <- read.csv('.\\result\\灰色预测模型碳价影响因素精度表.csv')
+tab6 <- read.csv('./result/灰色预测模型碳价影响因素精度表.csv')
 knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳价影响因素精度表",
       digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
@@ -357,14 +357,14 @@ knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳价�
 从图中得知神经网络的拟合效果在某些区域表现不佳，准确性较低。 
 
 ```{r tab-7, eval=T, echo=F, results='markup', cache=F}  
-tab7 <- read.csv('.\\result\\神经网络预测结果.csv')
+tab7 <- read.csv('./result/神经网络预测结果.csv')
 knitr::kable(tab7, row.names =F, align = "l", caption="神经网络预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
 ```{r fig1,eval=T, echo=F,fig.cap="神经网络预测结果",dev="png",results='markup', cache=F}
-knitr::include_graphics(".\\result\\神经网络预测结果.png")
+knitr::include_graphics(./result/network.png")
 ```
 
 ### ARMA模型下的碳价预测
@@ -400,14 +400,14 @@ Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+\epsilon_t	\\
 波动，处于平稳状态。
 
 ```{r tab-8, eval=T, echo=F, results='markup', cache=F}  
-tab8 <- read.csv('.\\result\\ARMA模型预测结果.csv')
+tab8 <- read.csv('./result/ARMA模型预测结果.csv')
 knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
 ```{r fig2,eval=T, echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
-knitr::include_graphics(".\\result\\ARMA模型预测效果图.png")
+knitr::include_graphics("./result/ARMA.png")
 ```
 
 ### Prophet模型下的碳价预测
@@ -439,14 +439,14 @@ s\left( t \right) = X\left( t \right)\beta
 随着异常值点造成剧烈的波动，而ARMA则容易受到异常值点的影响，从而造成整个结果的偏差。
 
 ```{r tab-9, eval=T, echo=F, results='markup', cache=F}  
-tab9 <- read.csv('.\\result\\Prophet模型预测结果.csv')
+tab9 <- read.csv('./result/Prophet模型预测结果.csv')
 knitr::kable(tab9, row.names =F, align = "l", caption="Prophet模型预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
 ```{r fig3,eval=T, echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
-knitr::include_graphics(".\\result\\Prophet模型预测结果.png")
+knitr::include_graphics("./result/Prophet模型预测结果.png")
 ```
 
 同时，对比Prophet模型预测的结果图 \@ref(fig:fig3) 和灰色BP神经网络预测模型结果
@@ -471,7 +471,7 @@ knitr::include_graphics(".\\result\\Prophet模型预测结果.png")
 Prophet预测模型对碳价预测并计算MAPE值，具体结果如图 \@ref(fig:fig4) 所示。
 
 ```{r fig4,eval=T, echo=F,fig.cap="各模型平均绝对百分误差图",dev="png",results='markup', cache=F}
-knitr::include_graphics(".\\result\\各模型平均绝对百分误差图.png")
+knitr::include_graphics("./result/compare.png")
 ```
 
 从方法的角度分析，对训练集的训练中，MAPE值ARMA<Prophet法<灰色BP神经网络法，
