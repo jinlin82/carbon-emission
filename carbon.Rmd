@@ -47,7 +47,7 @@ graphics.off()
 Sys.setlocale("LC_ALL", "Chinese")
 ```
 
-**摘要：** 本文从政府和企业的角度出发选取6个试点地区作为研究对象，以2017年1月1日至
+**摘要：** 本文从政府和企业两个角度出发选取国内6个碳交易试点地区作为研究对象，以2017年1月1日至
 2018年6月30的交易数据为训练集，以2018年7月1日至2018年9月30日为测试集，重点探究了国
 内碳价格的影响因素的作用机理及碳价的短期预测问题，结果发现我国正处于受能源价格影响
 的初级阶段，宏观经济影响微弱，股市联动性差，并且能源价格呈负向作用，这种负向作用从
@@ -203,7 +203,7 @@ knitr::kable(tab2, row.names =F, align = "l", caption="数据基本信息表",
 CERChange、WTIChange、NEWCChange。这时所有因子均为平稳序列，满足进行面板回归
 的基本要求。
 
-```{r tab-3, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-3, eval=T, echo=F, results='markup', cache=F}
 tab3 <- read.csv('.\\result\\平稳性检验.csv')
 knitr::kable(tab3, row.names =F, align = "l", caption="平稳性检验",
              digits=4,
@@ -282,7 +282,7 @@ p值小于0.0001,故强烈拒绝“无同期相关”的原假设，认为存在
 根据上述检验结果得知扰动项 $\{\epsilon_{it}\}$ 存在组间异方差、组内自相关和组间同期相关。
 为解决以上问题，本文将使用广义最小二乘法（FGLS）进行参数估计。结果如表 \@ref(tab:tab-5) ：
 
-```{r tab-5, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-5, eval=T, echo=F, results='markup', cache=F}
 options(knitr.kable.NA="")
 tab5 <- read.csv('./result/参数估计结果.csv')
 knitr::kable(tab5, row.names =F, align = "l", caption="参数估计结果",
@@ -341,7 +341,7 @@ $$\hat{X}^{(k+1)}=(e^{0.002}-1)[X^{(0)}(n)+\frac{82.27}{0.002}]e^{0.002k}$$ {#eq
 预测精度较其他影响因素较小，误差较大。而国际碳价变化率、碳效率指数变化率及汇率变动率
 预测效果较好，这从侧面反映了灰色模型对于具有确定性趋势的序列预测效果更佳。
 
-```{r tab-6, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-6, eval=T, echo=F, results='markup', cache=F}
 tab6 <- read.csv('./result/灰色预测模型碳价影响因素精度表.csv')
 knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳价影响因素精度表",
       digits=2,
@@ -356,15 +356,15 @@ knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳价�
 基于灰色BP神经网络的碳价预测对于波动点的捕捉比较准确，且能够拟合出数据的波动，但
 从图中得知神经网络的拟合效果在某些区域表现不佳，准确性较低。 
 
-```{r tab-7, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-7, eval=T, echo=F, results='markup', cache=F}
 tab7 <- read.csv('./result/神经网络预测结果.csv')
 knitr::kable(tab7, row.names =F, align = "l", caption="神经网络预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig1,eval=T, echo=F,fig.cap="神经网络预测结果",dev="png",results='markup', cache=F}
-knitr::include_graphics(./result/network.png")
+```{r fig1,eval=T, out.width="100%", echo=F,fig.cap="神经网络预测结果",dev="png",results='markup', cache=F}
+knitr::include_graphics("./result/network.png")
 ```
 
 ### ARMA模型下的碳价预测
@@ -376,7 +376,7 @@ knitr::include_graphics(./result/network.png")
 变动的原因，进行自相关和偏自相关检验，结果显示自相关函数拖尾，偏自相关函数二阶截尾。
 我们建立模型为ARMA(2,0)。具体形式如下：
 
-$$\begin{array}{1}
+$$\begin{array}{l}
 Deal_t=14.14+0.59Deal_{t-1}+0.31Deal_{t-2}+\epsilon_t 	\\
 \quad \quad \quad \quad( 0.05) \quad \quad \quad (0.05)  \quad \quad \quad \quad  ( 0.36 ) 
 \end{array}$$ {#eq:model7}
@@ -390,7 +390,7 @@ Shapiro-Wilk正态检验得到统计量值为W=0.9144,相对应的p值显著小�
 系数显著，未发现新的异常值。进行Ljung-Box检验结果中 $Q=30.23$ ，p值等于0.17，所以
 没有证据拒绝误差项不相关的原假设，表明该模型拟合效果好。
 
-$$\begin{array}{1}
+$$\begin{array}{l}
 Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+\epsilon_t	\\
 \quad \quad \quad \quad (0.37) \quad \quad (0.05)  \quad \quad \quad( 0.05 ) \quad \quad \quad(0.46) 
 \end{array}$$ {#eq:model8}
@@ -399,14 +399,14 @@ Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+\epsilon_t	\\
 非常高，对未来10进行短期预测，预测结果显示未来10期碳价水平处于14元，并呈小幅度
 波动，处于平稳状态。
 
-```{r tab-8, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-8, eval=T, echo=F, results='markup', cache=F}
 tab8 <- read.csv('./result/ARMA模型预测结果.csv')
 knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig2,eval=T, echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
+```{r fig2, out.width="100%", echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
 knitr::include_graphics("./result/ARMA.png")
 ```
 
@@ -438,14 +438,14 @@ s\left( t \right) = X\left( t \right)\beta
 对比Prophet模型和ARMA模型的结果来看，Prophet模型对异常值更具有稳健性，其不会
 随着异常值点造成剧烈的波动，而ARMA则容易受到异常值点的影响，从而造成整个结果的偏差。
 
-```{r tab-9, eval=T, echo=F, results='markup', cache=F}  
+```{r tab-9, eval=T, echo=F, results='markup', cache=F}
 tab9 <- read.csv('./result/Prophet模型预测结果.csv')
 knitr::kable(tab9, row.names =F, align = "l", caption="Prophet模型预测结果",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig3,eval=T, echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
+```{r fig3,eval=T, out.width="100%", echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
 knitr::include_graphics("./result/Prophet.png")
 ```
 
@@ -470,7 +470,7 @@ knitr::include_graphics("./result/Prophet.png")
 并根据上述原理分别采用灰色预测与BP神经网络组合预测模型、ARMA可加新息异常回归以及
 Prophet预测模型对碳价预测并计算MAPE值，具体结果如图 \@ref(fig:fig4) 所示。
 
-```{r fig4,eval=T, echo=F,fig.cap="各模型平均绝对百分误差图",dev="png",results='markup', cache=F}
+```{r fig4,eval=T, out.width="100%", echo=F,fig.cap="各模型平均绝对百分误差图",dev="png",results='markup', cache=F}
 knitr::include_graphics("./result/compare.png")
 ```
 
