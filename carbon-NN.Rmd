@@ -3,6 +3,11 @@ title: "碳排放交易价格影响因素分析及预测"
 author: "Jin"
 date: "2019-03-02"
 output:
+  bookdown::word_document2:
+    fig_caption: true
+    reference_docx: ./style/word-styles-02.docx
+    md_extensions: +east_asian_line_breaks
+    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::html_document2:
     number_sections: true
     seq_numbering: true
@@ -13,11 +18,6 @@ output:
     keep_md: true
     toc: true
     pandoc_args: ["--filter", "pandoc-crossref", "-M", "eqnPrefix="]
-  bookdown::word_document2:
-    fig_caption: true
-    reference_docx: ./style/word-styles-02.docx
-    md_extensions: +east_asian_line_breaks
-    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::pdf_document2:
     keep_tex: yes
     toc: false
@@ -33,15 +33,26 @@ csl: ./style/chinese-gb7714-2005-numeric.csl
 link-citations: true
 ---
 
+```{r setup, echo=F}
+knitr::opts_knit$set(root.dir = getwd())
+knitr::opts_chunk$set(echo = FALSE, results = 'hide')
+knitr::opts_chunk$set(warning = FALSE, message=FALSE)
+```
 
-
-
+```{r prepare}
+rm(list=ls())
+options(digits=4)
+options(scipen=100)
+graphics.off()
+Sys.setlocale("LC_ALL", "Chinese")
+```
 
 **TODO**
 
 - [X] 把数据和程序打包
 - [X] 图重新画，在生成的word里面图像的字体太小了
 - [ ] 把图形位置替换为生成图形的R代码
+- [ ] 分成两篇文章：1. 基于灰色BP神经网络碳排放权交易价格预测； 2. 基于Prophet自动预测模型碳排放权交易价格预测
 
 **摘要：** 本文从政府和企业两个角度出发选取国内6个碳交易试点地区作为研究对象，重
 点探究了国内碳交易价格的影响因素作用机理及预测问题，结果发现我国正处于受能源价格
@@ -50,51 +61,51 @@ link-citations: true
 行短期预测，有效期需控制在15期内，长期预测可采用Prophet模型，其操作的便捷性和可
 分解性将为碳市场研究人员带来诸多便利。
 
-# 引言及文献综述
+# 简介
 [//]: # 问题界定，文献综述，文章结构简述
 
-近些年来，全球极端天气频繁发生，升温超过1℃，然而全球碳排放量与日俱增，2017年增
-长1.6%，2018年增幅约为2.7%。若任由形势继续发展下去，必将严重威胁人类的生存与发展。
-中国作为全球最大的温室气体排放国，为应对全球气候变化，我国已经和175个国家签署了
-《巴黎气候协定》，并在多次政府工作会议中指出要加快推动碳市场的建设和碳金融的发展。
-但我国碳排放交易（以下简称碳交易）市场的建立起步较晚，在经历了4年试点地区探索后，
-2017年12月19日我国碳排放交易系统才正式启动。当下我国正处于全面建设碳排放交易市场
-的初级阶段，处于全球碳交易链条的最底端，国际话语权不足，同时市场机制尚未完善，其
-发展仍然存在很多制约因素，而价格作为调节碳交易市场的经济手段，重点研究其影响因素
-的作用机理和把握价格变动规律，对于深入了解碳市场，使得碳交易市场获得全面健康持久
-的发展具备重要的推动作用。
+近几年来，全球极端天气频繁发生，平均气温升温超过1℃，这与全球碳排放量与日俱增密
+切相关。若任由形势继续发展下去，必将严重威胁人类的生存与发展。中国作为全球最大的
+温室气体排放国，为应对全球气候变化，我国已经和175个国家签署了《巴黎气候协定》，
+并在多次政府工作会议中指出要加快推动碳市场的建设和碳金融的发展。但我国碳排放交易
+（以下简称碳交易）市场的建立起步较晚，在经历了4年地区试点探索后，2017年12月19日
+我国碳排放交易系统正式启动。当下我国正处于全面建设碳排放交易市场的初级阶段，处于
+全球碳交易链条的底端，国际话语权不足，同时市场机制尚未完善，其发展仍然存在很多制
+约因素，而价格作为调节碳交易市场的经济手段，研究其影响因素的作用机理和把握价格变
+动规律，对于深入了解碳市场，对于推进碳交易市场全面健康持久的发展具备重要作用。
 
-我国碳排放交易市场是在欧盟排放权交易体系（EU ETS）基础之上建立而来的。欧盟碳交易
-体系 (EU ETS)市场机制成熟，运行时间长，当下对EU ETS的研究成果也相对较多，例如
-Deeney(2016)采用事件分析法探究了欧洲议会的决议对于EUA价格的波动影响
-[@Deeney2016Influences]，Aatola(2013)探究了欧盟ETS市场发现碳交易期货价格与电力价
-格、能源价格存在强相关性[@Aatola2013Price]，Tan(2017)对EUA价格基于分位数回归探究
-了能源、经济因素的依赖和影响路径，发现前期能源价格对碳市场冲击影响大，后期工业发
-展、股票市场因素的影响力逐渐提升[@Tan2017Dependence]。表明了建设碳交易市场是一个
-漫长而艰巨的过程，需要阶段性地分析碳交易价格影响因素，从而不断完善碳交易定价机制。
-与EUETS相比，国内碳交易市场仍处于成长阶段，市场机制尚待完善。在国际市场已经逐渐
-形成了以宏观经济、能源市场为主要影响因素，政策因素等其他因素为辅的影响系统时，我
-国学者利用当下碳试点地区积累的数据，也纷纷开展了碳排放权价格的研究。王倩(2015)认
-为中国碳交易市场需求方起主导地位，能源、气候、经济对碳交易价格的波动有显著影响[@王倩2015]。
-赵立祥(2016)研究得出碳交易价格的首要影响因素是市场环境,而政策和气候环
-境具备一定的影响，能源价格影响微弱[@赵立祥2016]。樊艳艳(2017)采用稳健的静态面板
-回归模型发现煤炭价格波动对碳排放交易价格具备显著影响[@樊艳艳2017]。但是我们也发
-现在影响因子的探究中多数文献均为主观选择“重要”因子，采用回归方程探究其影响，当
-下大数据发展迅速，我们可以结合大数据方法进行客观的变量筛选后探究其影响，多角度探
-索影响因子的影响情况。
+我国碳排放交易市场是参照欧盟碳排放权交易体系（EU Emissions Trading System）建立
+起来的。欧盟碳交易体系市场机制成熟，运行时间长，当下对欧盟碳交易体系市场的研究成
+果也相对较多，例如Aatola(2013)研究欧盟碳排放市场发现碳交易期货价格与电力价格、能
+源价格存在强相关性[@Aatola2013Price]，Deeney(2016)采用事件分析法探究了欧洲议会的
+决议对于欧盟碳市场价格波动影响[@Deeney2016Influences]，Tan(2017)基于分位数回归探
+究了碳排放价格与能源、经济因素的依赖关系和影响路径，发现前期能源价格对碳市场冲击
+影响大，后期工业发展、股票市场因素的影响力逐渐提升[@Tan2017Dependence]。
 
-另一方面随着市场成熟度不断提高，交易者对于碳交易价格波动的变化关注度越来越高，准确地预测
-碳交易价格对于市场参与者进行经济决策显得尤为重要。姚奕(2017)、胡根华(2018)分别通过EMD-SVM
-模型和无穷活动率Levy过程分别对碳交易价格进行了预测并取得较好效果，这说明了碳交易市场的价格预测
-是可实施性的[@姚奕2017;@胡根华2018]。然而复杂的统计方法选择和模型检验给碳市场
-的参差不齐的研究人员带来了诸多不便。国外自动预测方法已经得到了较好的推广和应用，
-从Hyndman(2008)对自动ARIMA模型和指数平滑模型进行改进实现对季节性数据和非季节性数据
-的预测到Livera A M D(2011)基于状态空间框架提出了修正的指数平滑的自动预测方法，
-Taylor(2017)提出模块化的基于Prophet方法的时间序列预测，自动预测理论领域已经涌现了
-丰硕的成果[@Hyndman2008;@Livera2011;@Taylor2018]。但现阶段国内对于自动预测方法的
-应用很少，对于在碳交易市场领域的应用则更少，但实现自动预测无疑是对碳市场交易人员的一大福音，
-所以本文基于当下文献中发现的不足以及市场的迫切需求开展本文的研究，重点针对碳交易价格的
-影响因素及预测问题作出具体分析。
+与欧盟碳排放市场相比，国内碳交易市场仍处于成长阶段，市场机制尚待完善。在国际市场
+已经逐渐形成了以宏观经济、能源市场为主要影响因素，政策因素等其他因素为辅的影响系
+统时，我国学者利用当下碳试点地区积累的数据，也纷纷开展了碳排放权价格的研究。王倩
+(2015)认为中国碳交易市场需求方起主导地位，能源、气候、经济对碳交易价格的波动有显
+著影响[@王倩2015]。赵立祥(2016)研究得出碳交易价格的首要影响因素是市场环境,而政策
+和气候环境具备一定的影响，能源价格影响微弱[@赵立祥2016]。樊艳艳(2017)采用稳健的
+静态面板回归模型发现煤炭价格波动对碳排放交易价格具备显著影响[@樊艳艳2017]。但是
+我们也发现在影响因子的探究中多数文献均为主观选择“重要”因子，采用回归方程探究其
+影响，当下大数据发展迅速，我们可以结合大数据方法进行客观的变量筛选后探究其影响，
+多角度探索影响因子的影响情况。
+
+另一方面随着市场成熟度不断提高，交易者对于碳交易价格波动的变化关注度越来越高，准
+确地预测碳交易价格对于市场参与者进行经济决策显得尤为重要。姚奕(2017)、胡根华
+(2018)分别通过EMD-SVM模型和无穷活动率Levy过程分别对碳交易价格进行了预测并取得较
+好效果，这说明了碳交易市场的价格预测是可实施性的[@姚奕2017;@胡根华2018]。然而复
+杂的统计方法选择和模型检验给碳市场的参差不齐的研究人员带来了诸多不便。国外自动预
+测方法已经得到了较好的推广和应用，从Hyndman(2008)对自动ARIMA模型和指数平滑模型进
+行改进实现对季节性数据和非季节性数据的预测到Livera A M D(2011)基于状态空间框架提
+出了修正的指数平滑的自动预测方法，Taylor(2017)提出模块化的基于Prophet方法的时间
+序列预测，自动预测理论领域已经涌现了丰硕的成果
+[@Hyndman2008;@Livera2011;@Taylor2018]。但现阶段国内对于自动预测方法的应用很少，
+对于在碳交易市场领域的应用则更少，但实现自动预测无疑是对碳市场交易人员的一大福音，
+所以本文基于当下文献中发现的不足以及市场的迫切需求开展本文的研究，重点针对碳交易
+价格的影响因素及预测问题作出具体分析。
 
 # 碳排放交易市场与理论简介
 
@@ -177,24 +188,11 @@ $$y(t)=g(t)+s(t)+h(t)+\epsilon_t$$ {#eq:model3}
 极端天气和空气质量两个因素，国际市场选择了汇率及国际碳交易价格两个方面。每一维度下的具体
 指标和数据来源如表 \@ref(tab:tab-1) ：
 
-
-Table: (\#tab:tab-1)指标体系明细表
-
-维度       指标名称           变量名称    数据来源       
----------  -----------------  ----------  ---------------
-解释变量   碳价格             DealPrice   碳交易网       
-宏观经济   碳效率指数         TanChange   中证指数       
-           上证指数涨跌幅     SHChange    巨灵金融       
-           道琼斯指数涨跌幅   DJChange    巨灵金融       
-能源价格   德克萨斯原油价格   WTI         巨灵金融       
-           埃克天然气价格     ECO         巨灵金融       
-           纽卡斯尔煤炭价格   NEWC        巨灵金融       
-           天然气价格         Gas         金投网         
-           煤炭价格           Coal        同花顺         
-气候环境   极端天气           ExWeather   天气网         
-           空气质量指数       AQI         CSMAR          
-国际市场   核证减排量         CER         欧洲能源交易所 
-           汇率变动率         ExChange    巨灵金融       
+```{r tab-1, eval=T, echo=F, results='markup', cache=F}  
+tab1 <- read.csv('.\\result\\指标体系明细表.csv')
+knitr::kable(tab1, row.names =F, align = "l", caption="指标体系明细表",
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 对于碳交易价格，从获取的数据来看，国内八个试点地区中天津、重庆的非交易比例分别为66%，76%，
 为避免非交易日数据过多而造成结果的偏差，所以本文剔除了重庆和天津两个试点地区，最终以
@@ -209,25 +207,12 @@ Table: (\#tab:tab-1)指标体系明细表
 称为高温天气，当日低温低于0℃称为低温天气设定虚拟变量，当气温高于35℃或0℃时，设为1，其
 余设为0，从而完成数据的处理。
 
-
-Table: (\#tab:tab-2)数据基本信息表
-
-变量        指标               单位      平均值    标准差   最小值    最大值  
-----------  -----------------  --------  --------  -------  --------  --------
-DealPrice   碳价格             元        28.97     13.77    10.32     67.31   
-Coal        煤炭价格           元        1900.30   237.11   1391.00   2476.00 
-ExChange    汇率变动率         %         0.01      0.37     -1.43     1.14    
-SHChange    上证指数涨跌幅     %         -0.02     0.78     -4.05     2.17    
-DJChange    道琼斯指数涨跌幅   %         0.07      0.42     -1.78     1.77    
-WTI         德克萨斯原油价格   美元/桶   55.71     7.93     42.74     74.15   
-ECO         埃克天然气价格     美元/桶   2.18      0.95     0.06      5.14    
-NEWC        纽卡斯尔煤炭价格   美元/桶   93.57     11.19    72.42     118.09  
-Gas         天然气价格         元/吨     3917.67   817.57   2350.00   5350.00 
-HTem        日最高温           ℃         21.61     9.74     -5.00     40.00   
-LTem        日最低温           ℃         14.46     9.58     -12.00    30.00   
-AQI         空气质量指数       -         78.58     41.67    21.00     500.00  
-CER         核证减排量         欧元      0.22      0.04     0.16      0.30    
-TanChange   碳效率指数         -         -0.40     14.25    -86.94    39.34   
+```{r tab-2, eval=T, echo=F, results='markup', cache=F}  
+tab2 <- read.csv('./result/数据基本信息表.csv')
+knitr::kable(tab2, row.names =F, align = "l", caption="数据基本信息表",
+             digits=2,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 在变量筛选和进行静态面板回归分析之前，本文对选取指标进行面板单位根检验以避免伪回
 归的出现。本文采用Breitung检验，结果如表 \@ref(tab:tab-3) 。在原假设为所有面板均
@@ -238,27 +223,12 @@ TanChange   碳效率指数         -         -0.40     14.25    -86.94    39.34
 长率分别为CERChange、WTIChange、NEWCChange。这时所有因子均为平稳序列，满足进行面
 板回归的基本要求。
 
-
-Table: (\#tab:tab-3)平稳性检验
-
-变量         指标                 统计量    P值      结论   
------------  -------------------  --------  -------  -------
-DealPrice    碳价格               -1.8879   0.0295   平稳   
-TanChange    碳效率指数           -2.9509   0.0016   平稳   
-SHChange     上证指数涨跌幅       -3.3658   0.0004   平稳   
-DJChange     道琼斯指数涨跌幅     -4.1839   0        平稳   
-WTI          德克萨斯原油价格     0.1501    0.5597   非平稳 
-ECO          埃克天然气价格       -2.0485   0.0203   平稳   
-NEWC         纽卡斯尔煤炭价格     -0.7867   0.2157   非平稳 
-Gas          天然气价格           -1.8272   0.0338   平稳   
-Coal         煤炭价格             -1.9788   0.0239   平稳   
-AQI          空气质量指数         -4.7212   0        平稳   
-变量         指标                 统计量    P值      结论   
-CER          核证减排量           -0.0063   0.4975   非平稳 
-ExChange     汇率变动率           -2.028    0.0213   平稳   
-WTIChange    德克萨斯原油增长率   -0.6647   0.2531   平稳   
-NEWCChange   纽卡斯尔煤炭增长率   -3.5784   0.0002   平稳   
-CERChange    国际碳价增长率       -3.076    0.001    平稳   
+```{r tab-3, eval=T, echo=F, results='markup', cache=F}
+tab3 <- read.csv('./result/平稳性检验.csv')
+knitr::kable(tab3, row.names =F, align = "l", caption="平稳性检验",
+             digits=4,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 在进行平稳性检验后，根据Lasso原理我们将初始选取的指标进行标准化处理，以避免
 量纲影响惩罚项的大小。本文根据lars包Lasso方法完成变量的选择，并采用10折交叉法
@@ -267,23 +237,12 @@ CERChange    国际碳价增长率       -3.076    0.001    平稳
 其中上证指数涨跌幅、道琼斯指数涨跌幅、德克萨斯原油增长率及纽卡斯尔煤炭价格增长率的系
 数压缩至0，总计剔除4个变量，剩余8个重要因子。
 
-
-Table: (\#tab:tab-4)变量选择结果表
-
-变量         指标                 统计量   结论 
------------  -------------------  -------  -----
-TanChange    碳效率指数           -0.020   保留 
-SHChange     上证指数涨跌幅       0.000    剔除 
-DJChange     道琼斯指数涨跌幅     0.000    剔除 
-ECO          埃克天然气价格       -0.121   保留 
-Gas          天然气价格           -0.014   保留 
-Coal         煤炭价格             -0.248   保留 
-ExWeather    极端天气             0.109    保留 
-AQI          空气质量指数         0.027    保留 
-ExChange     汇率变动率           0.026    保留 
-WTIChange    德克萨斯原油增长率   0.000    剔除 
-NEWCChange   纽卡斯尔煤炭增长率   0.000    剔除 
-CERChange    国际碳价增长率       0.002    保留 
+```{r tab-4, eval=T, echo=F, results='markup', cache=F}
+tab4 <- read.csv('./result/变量选择结果表.csv')
+knitr::kable(tab4, row.names =F, align = "l", caption="变量选择结果表",
+             digits=3,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 针对lasso回归选择出的变量，我们进行多重共线性和相关性检验，以避免变量之间存在多重
 共线性或两两相关关系会影响到后续回归模型的建立。
@@ -343,28 +302,13 @@ p值小于0.0001,故强烈拒绝“无同期相关”的原假设，认为存在
 根据上述检验结果得知扰动项 $\{\epsilon_{it}\}$ 存在组间异方差、组内自相关和组间同期相关。
 为解决以上问题，本文将使用广义最小二乘法（FGLS）进行参数估计。结果如表 \@ref(tab:tab-5) ：
 
-
-Table: (\#tab:tab-5)参数估计结果
-
-变量                             指标             系数值        标准误  
--------------------------------  ---------------  ------------  --------
-TanChange                        碳效率指数       -0.0039       -0.0046 
-Coal                             煤炭价格         -0.00314***   -0.0003 
-Eco                              埃克天然气价格   -0.02140*     -0.0118 
-Gas                              天然气价格       -0.0001       -0.0001 
-ExWeather                        极端天气         0.4510***     -0.1560 
-AQI                              空气质量指数     0.00503***    -0.0010 
-CERChange                        国际碳价增长率   0.0066        -0.0318 
-ExChange                         汇率变动率       0.24          -0.1790 
-2.Area                           福建             -26.0400***   -0.5270 
-3.Area                           广东             -38.7000***   -0.2580 
-4.Area                           湖北             -37.4400***   -0.2540 
-5.Area                           上海             -18.4500***   -0.2900 
-6.Area                           深圳             -21.8600***   -0.3420 
-Constant                         常数项           59.1500***    -0.6510 
-Observations: 2,142                                                     
-Number of Area: 6                                                       
-*** p<0.01, ** p<0.05, * p<0.1                                          
+```{r tab-5, eval=T, echo=F, results='markup', cache=F}
+options(knitr.kable.NA="")
+tab5 <- read.csv('./result/参数估计结果.csv')
+knitr::kable(tab5, row.names =F, align = "l", caption="参数估计结果",
+             digits=4,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 根据上表结果得知国内低碳企业碳效率指数增长率、国内煤炭价格、国内外天然气对碳交易
 价格有负向影响。其中国内煤炭价格对碳交易价格变动的影响在1%的置信水平下显著，当煤
@@ -420,23 +364,12 @@ $$\hat{X}^{(k+1)}=(e^{0.002}-1)[X^{(0)}(n)+\frac{82.27}{0.002}]e^{0.002k}$$ {#eq
 变化率、碳效率指数变化率及汇率变动率预测效果较好，这从侧面反映了灰色模型对于具有
 确定性趋势的序列预测效果更佳。
 
-
-Table: (\#tab:tab-6)灰色预测模型碳交易价格影响因素精度表
-
-时期   AQI     HTem    ECO     Coal      LTem    Gas       CERChange   TanChange   ExChange 
------  ------  ------  ------  --------  ------  --------  ----------  ----------  ---------
-1      71.47   34.14   10.37   2036.83   27.95   3418.55   0.29        -0.65       0.34     
-2      71.3    34.5    10.7    2026.44   28.61   3440.89   0.29        -0.65       0.34     
-3      71.13   34.87   11.05   2016.1    29.3    3463.37   0.29        -0.65       0.34     
-4      70.96   35.24   11.41   2005.82   30      3486      0.29        -0.65       0.34     
-5      70.79   35.62   11.77   1995.59   30.71   3508.78   0.29        -0.65       0.34     
-6      70.62   36      12.15   1985.42   31.45   3531.71   0.29        -0.65       0.34     
-7      70.45   36.38   12.55   1975.29   32.2    3554.79   0.29        -0.65       0.34     
-8      70.28   36.77   12.95   1965.22   32.97   3578.02   0.29        -0.65       0.34     
-9      70.11   37.16   13.37   1955.19   33.75   3601.4    0.29        -0.65       0.34     
-10     69.94   37.55   13.8    1945.22   34.56   3624.93   0.29        -0.65       0.34     
-精度   勉强    勉强    勉强    合格      合格    好        好          好          好       
-等级   合格    合格    合格                                                                 
+```{r tab-6, eval=T, echo=F, results='markup', cache=F}
+tab6 <- read.csv('./result/灰色预测模型碳价影响因素精度表.csv')
+knitr::kable(tab6, row.names =F, align = "l", caption="灰色预测模型碳交易价格影响因素精度表",
+      digits=2,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
 由于神经网络具有较强的适用性和容错能力，对历史数据建立训练模型，把灰色预测的数据
 结果带入训练好的模型中，就可以得到充分考虑历史信息的预测结果。在对数据进行标准化
@@ -447,17 +380,29 @@ $10^{-7}$ ，学习次数10000次，神经元的个数为显著影响碳交易�
 捉比较准确，且能够拟合出数据的波动，但从图中得知神经网络的拟合效果在某些区域表现
 不佳，准确性较低。
 
+```{r tab-7, eval=T, echo=F, results='markup', cache=F}
+tab7 <- read.csv('./result/神经网络预测结果.csv')
+knitr::kable(tab7, row.names =F, align = "l", caption="神经网络预测结果",
+             digits=2,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
-Table: (\#tab:tab-7)神经网络预测结果
+```{r fig1,eval=T,fig.align="center",out.width="100%", echo=F,fig.cap="神经网络预测结果",dev="png",results='markup', cache=F}
+## setwd("E:/paper&project/paper/journal/carbon-emission")
+library(data.table)
+Data <- read.csv("./data/guangdong.csv",header = T,sep=",")
+setcolorder(Data,c("AQIIndex","ClosePrice","Europe_change","Global_GasPrice","Eco_rmb","JDWeather","cer_rmb_diff","TAN180_Change","Deal"))
+#network
+predict_nnet <- read.csv("./data/predict_nnet_61.csv",header = T,sep=",")
+predict_nnet <- as.vector(predict_nnet$V1)
+par(mar=c(5,5,2,2)+0.1,oma=c(0, 0, 0, 0))
+plot(predict_nnet[1:367],lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7,ylim=c(11,19))
+points(Data[1:357,9],lty=2,type="b",pch=4)
+axis(1,at=c(1,50,100,150,200,250,300,350),labels = c("2017/1/4","2017/3/23","2017/6/9","2017/8/21","2017/11/6",
+                                                     "2018/1/7","2018/4/9","2018/6/21"),cex.axis=0.7)
+legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
 
-时期     X1      X2      X3      X4      X5      X6      X7     X8      X9      X10   
--------  ------  ------  ------  ------  ------  ------  -----  ------  ------  ------
-预测值   14.19   14.22   14.28   13.16   13.16   13.03   12.9   12.95   13.11   13.25 
-
-<div class="figure">
-<img src="./result/network.png" alt="神经网络预测结果" width="100%" />
-<p class="caption">(\#fig:fig1)神经网络预测结果</p>
-</div>
+```
 
 ### ARMA模型下的碳交易价格预测
 
@@ -491,17 +436,22 @@ Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+\epsilon_t	\\
 非常高，对未来10进行短期预测，预测结果显示未来10期碳交易价格水平处于14元，并呈小幅度
 波动，处于平稳状态。
 
+```{r tab-8, eval=T, echo=F, results='markup', cache=F}
+tab8 <- read.csv('./result/ARMA模型预测结果.csv')
+knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
+             digits=2,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
-Table: (\#tab:tab-8)ARMA模型预测结果
-
-时期     X1      X2      X3      X4      X5      X6      X7      X8      X9      X10   
--------  ------  ------  ------  ------  ------  ------  ------  ------  ------  ------
-预测值   14.08   14.06   14.07   14.07   14.07   14.07   14.08   14.08   14.08   14.08 
-
-<div class="figure">
-<img src="./result/ARMA.png" alt="ARMA模型预测效果图" width="100%" />
-<p class="caption">(\#fig:fig2)ARMA模型预测效果图</p>
-</div>
+```{r fig2, out.width="100%", echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
+arma <- read.csv("./data/arima_result.csv",header = T,sep=",")
+par(mar=c(5,5,2,2)+0.1,oma=c(0,0,0,0))
+plot(arma$x,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",ylim = c(11,19),cex.lab=.8,cex.axis=.7)
+points(Data[1:357,9],lty=2,type="b",pch=4)
+axis(1,at=c(1,50,100,150,200,250,300,350),labels = c("2017/1/4","2017/3/23","2017/6/9","2017/8/21","2017/11/6",
+                                                     "2018/1/7","2018/4/9","2018/6/21"),cex.axis=.7)
+legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
+```
 
 ### Prophet模型下的碳交易价格预测
 
@@ -531,17 +481,23 @@ s\left( t \right) = X\left( t \right)\beta
 对比Prophet模型和ARMA模型的结果来看，Prophet模型对异常值更具有稳健性，其不会
 随着异常值点造成剧烈的波动，而ARMA则容易受到异常值点的影响，从而造成整个结果的偏差。
 
+```{r tab-9, eval=T, echo=F, results='markup', cache=F}
+tab9 <- read.csv('./result/Prophet模型预测结果.csv')
+knitr::kable(tab9, row.names =F, align = "l", caption="Prophet模型预测结果",
+             digits=2,
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
 
-Table: (\#tab:tab-9)Prophet模型预测结果
+```{r fig3,eval=T, out.width="100%", echo=F,fig.cap="Prophet模型预测结果",dev="png",results='markup', cache=F}
+prophet_model <- read.csv("./data/prophet.csv",header = T,sep=",")
+par(mar=c(5,5,2,2)+0.1,oma=c(0, 0, 0, 0))
+plot(prophet_model$x,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",ylim=c(11,19),cex.lab=0.8,cex.axis=0.7)
+points(Data[1:357,9],lty=2,type="b",pch=4)
+axis(1,at=c(1,50,100,150,200,250,300,350),labels = c("2017/1/4","2017/3/23","2017/6/9","2017/8/21","2017/11/6",
+                                                     "2018/1/7","2018/4/9","2018/6/21"),cex.axis=0.7)
+legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
 
-时期     X1      X2      X3      X4      X5     X6      X7      X8      X9      X10   
--------  ------  ------  ------  ------  -----  ------  ------  ------  ------  ------
-预测值   14.42   14.37   14.31   14.26   14.2   14.13   14.07   14.01   13.94   13.88 
-
-<div class="figure">
-<img src="./result/Prophet.png" alt="Prophet模型预测结果" width="100%" />
-<p class="caption">(\#fig:fig3)Prophet模型预测结果</p>
-</div>
+```
 
 同时，对比Prophet模型预测的结果图 \@ref(fig:fig3) 和灰色BP神经网络预测模型结果图
 \@ref(fig:fig1) 分析发现，整体上Prophet的模型拟合曲线比较平滑，清晰的描绘了碳交
@@ -564,10 +520,17 @@ Table: (\#tab:tab-9)Prophet模型预测结果
 并根据上述原理分别采用灰色预测与BP神经网络组合预测模型、ARMA可加新息异常回归以及
 Prophet预测模型对碳交易价格预测并计算MAPE值，具体结果如图 \@ref(fig:fig4) 所示。
 
-<div class="figure">
-<img src="./result/compare.png" alt="各模型平均绝对百分误差图" width="100%" />
-<p class="caption">(\#fig:fig4)各模型平均绝对百分误差图</p>
-</div>
+```{r fig4,eval=T, out.width="100%", echo=F,fig.cap="各模型平均绝对百分误差图",dev="png",results='markup', cache=F}
+accuracy <- read.csv("./data/MAPE.csv",header =T,sep=",")
+par(mar=c(5,5,2,2)+0.1, oma=c(0, 0, 0, 0))
+plot(accuracy[,1],type="b",ylim=c(0,10),
+     xlab="预测期",ylab="MAPE",lty=1,cex.lab=0.8,cex.axis=0.7,pch=18,lwd=1.5,cex=0.7)
+lines(accuracy[,2],type="b",lty=2,pch=16,lwd=1.5,cex=0.7)
+lines(accuracy[,3],type="b",lty=3,pch=4,lwd=1.5,cex=0.7)
+legend("topright",c("灰色BP","Prophet","ARMA"),pch=c(18,16,4),
+       lty=c(1,2,3),bty="n",cex=0.7)  
+
+```
 
 从方法的角度分析，对训练集的训练中，MAPE值ARMA<Prophet法<灰色BP神经网络法，说明
 ARMA方法对原始数据拟合度最高，而灰色BP神经网络预测模型方法最差。从测试集的整体情
