@@ -1,6 +1,18 @@
-###问题1：prophet函数中的yearly.seasonality="TRUE","auto","FALSE",以及“Fourier terms”有什么区别
-###问题2：Fourier terms中的x(t),t是否需要从1开始重新编号
-###问题3：simulated historical forecast是如何处理误差的 
+---
+title: "prophet-cutoff"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+问题1：prophet函数中的yearly.seasonality="TRUE","auto","FALSE",以及“Fourier terms”有什么区别
+问题2：Fourier terms中的x(t),t是否需要从1开始重新编号
+问题3：simulated historical forecast是如何处理误差的 
+```{r}
 rm=list()
 history=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong.csv")
 #help("as.Date")
@@ -8,9 +20,12 @@ history=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong.csv")
 history$date=as.Date(history$date,"%Y/%m/%d")
 str(history)
 colnames(history)=c("ds","y")
-#arma模型
-##平稳性检验
+```
+# arma模型
+
+```{r}
 library(tseries)
+## 平稳性检验
 pp.test(history$y)#10%的显著性水平下平稳
 
 
@@ -57,7 +72,9 @@ plot(arma.his,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",cex
 points(history$y,lty=2,type="b",pch=4)
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
 legend("topleft",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
+```
 
+```{r}
 #prophet模型
 library(prophet)
 m3=prophet(history)
@@ -94,13 +111,18 @@ write.csv(cross,"E:/github_repo/carbon-emission/data/updata/cross.csv")
 as.Date("2017/01/03","%Y/%m/%d")+105
 crossday=cross_validation(m3,90,units="days")
 write.csv(crossday,"E:/github_repo/carbon-emission/data/updata/crossday.csv")
+```
+
+```{r}
 #as.Date("2019/04/01","%Y/%m/%d")-90
 #as.Date("2019/02/15","%Y/%m/%d")-as.Date("2018/11/19","%Y/%m/%d")
 #as.Date("2019/01/01","%Y/%m/%d")-90*0.5+90
 #as.Date("2018/11/17","%Y/%m/%d")-as.Date("2018/07/05","%Y/%m/%d")
 #as.Date("2017/09/28","%Y/%m/%d")-as.Date("2017/07/06","%Y/%m/%d")
 #as.Date("2018/02/04","%Y/%m/%d")-as.Date("2017/11/25","%Y/%m/%d")
-#参数period表示每个cutoff点之间的间距都是45，horizon表示从历史数据的最后一天退回
-#90天，initial表示历史数据最开始的日期+initial;initial和horizon能够控制cutoff的范围
-#horizon指从cutoff开始的预测天数，如cutoff为2018/11/17，在接下来的预测中，由于历史
-#数据中没有2018/11/18,所以从19开始，90天以后是2019/2/17，但在15截至，因为剩余两天没有历史数据，无法做预测
+```
+
+参数period表示每个cutoff点之间的间距都是45，horizon表示从历史数据的最后一天退回
+90天，initial表示历史数据最开始的日期+initial;initial和horizon能够控制cutoff的范围
+horizon指从cutoff开始的预测天数，如cutoff为2018/11/17，在接下来的预测中，由于历史
+数据中没有2018/11/18,所以从19开始，90天以后是2019/2/17，但在15截至，因为剩余两天没有历史数据，无法做预测
