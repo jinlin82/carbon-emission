@@ -100,7 +100,3 @@ write.csv(crossday,"E:/github_repo/carbon-emission/data/updata/crossday.csv")
 #as.Date("2018/11/17","%Y/%m/%d")-as.Date("2018/07/05","%Y/%m/%d")
 #as.Date("2017/09/28","%Y/%m/%d")-as.Date("2017/07/06","%Y/%m/%d")
 #as.Date("2018/02/04","%Y/%m/%d")-as.Date("2017/11/25","%Y/%m/%d")
-#参数period表示每个cutoff点之间的间距都是45，horizon表示从历史数据的最后一天退回
-#90天，initial表示历史数据最开始的日期+initial;initial和horizon能够控制cutoff的范围
-#horizon指从cutoff开始的预测天数，如cutoff为2018/11/17，在接下来的预测中，由于历史
-#数据中没有2018/11/18,所以从19开始，90天以后是2019/2/17，但在15截至，因为剩余两天没有历史数据，无法做预测
