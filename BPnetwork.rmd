@@ -1,0 +1,113 @@
+---
+title: "灰色BP神经网络预测方法"
+author: "马忠芸"
+date: "2019/4/11"
+output:
+  html_document:
+    df_print: paged
+    toc: no
+  bookdown::pdf_document2:
+    keep_tex: yes
+    latex_engine: xelatex
+    md_extensions: +east_asian_line_breaks
+    pandoc_args:
+    - --listing
+    - --filter
+    - pandoc-crossref
+    toc: no
+  bookdown::word_document2:
+    fig_caption: yes
+    md_extensions: +east_asian_line_breaks
+    pandoc_args:
+    - --filter
+    - pandoc-crossref
+    reference_docx: ./style/word-styles-02.docx
+  bookdown::html_document2:
+    fig_caption: yes
+    highlight: haddock
+    keep_md: yes
+    md_extensions: +east_asian_line_breaks
+    number_sections: yes
+    pandoc_args:
+    - --filter
+    - pandoc-crossref
+    - -M
+    - eqnPrefix=
+    seq_numbering: yes
+    theme: null
+    toc: yes
+css: ./style/markdown.css
+bibliography: Bibfile.bib
+eqnPrefixTemplate: ($$i$$)
+link-citations: yes
+linkReferences: yes
+csl: ./style/chinese-gb7714-2005-numeric.csl
+autoEqnLabels: yes
+---
+
+```{r setup, echo=F}
+knitr::opts_knit$set(root.dir = getwd())
+knitr::opts_chunk$set(echo = FALSE, results = 'hide')
+knitr::opts_chunk$set(warning = FALSE, message=FALSE)
+```
+
+```{r prepare}
+rm(list=ls())
+options(digits=4)
+options(scipen=100)
+graphics.off()
+Sys.setlocale("LC_ALL", "Chinese")
+```
+
+
+灰色 $BP$ 神经网络是灰色预测模型和 $BP$ 神经网络预测方法结合的预测模型，综合了灰色模型预测序列
+未来变化趋势定性分析的特点和 $BP$ 神经网络适用于非线性的样本定量分析的优点，解决了单一灰色
+预测模型中由于随机因素大而造成无法真实预测序列内部规律及单一BP神经网络模型中输入层随机的问题，
+更能真实的反映复杂碳排放交易市场的价格变化规律。在重要影响因素的探究的基础下，我们首先实现各
+大重要影响因素的灰色预测过程，去除各因子中的灰信息，通过白化过程中得到的确定性信息作为 $BP$ 神
+经网络的输入信息，而后通过 $BP$ 神经网络模型的学习和训练完成对真实碳交易价格的预测。其中针
+对重要影响因子的灰色预测过程具体如下：
+
+设重要影响因子 $X^{(0)}$为一单调非负的时间序列。首先，需要采用一次累加的方式弱化原始序列的
+随机性得到序列 $X^{(1)}$ ，对 $X^{(1)}$ 建立下列一阶线性微分方程：
+
+$$\frac{\rm dX^{(1)}}{\rm dt}+\alpha X^{(1)}= u$$ {#eq:model1}
+
+
+得到 $GM(1,1)$ 模型，求解预测值：
+
+$$\hat X^{(1)}(k+1)=\left [\hat X^{(1)}(0)-\frac{\hat \mu}{\hat \alpha}\right] e^{-{\hat \alpha}k}+\frac{\hat \mu}{\hat \alpha}$$ {#eq:model2}
+
+
+由于在模型预测的过程中我们进行了累加处理，所以若需要得到真实的预测值，则需要进行累减处理，
+将 $GM(1,1)$ 模型所得数据 $\hat X^{(1)}(k+1)$ 进行累减还原为 $\hat X^{(0)}(k+1)^{21}$ ，
+则：
+
+$$\hat X^{(0)}(K+1)=(e^{-\hat \alpha}-1)\left[X^{(0)}(n)-\frac{\hat \mu}{\hat \alpha}\right]e^{{-\hat \alpha} k}$$ {#eq:model3}
+
+
+由上述步骤可以得到序列的预测结果，但预测结果的准确性需要我们对比后验差模型精度表来进行衡量。
+通过计算原始序列 $X^{(0)}$  和残差的方差之比 $C$ 即后验差比，来判别模型的预测精度, $C$ 值越小
+表明预测值和实际的差异越小。根据后验差检验判别表得知，当 $C$ 小于 $0.35$ ，表明模型拟合效果
+好, $C$ 值在 $0.35-0.5$ 之间，模型拟合效果为“合格”，$C$ 值在 $0.5-0.65$ 之间，模型拟合效果为“勉
+强合格”，$C$ 值大于 $0.65$ ,说明拟合效果差，需要采用其他方法进行预测。
+
+当灰色预测过程解决了传统 $BP$ 神经网络输入层所存在的随机性的问题后，我们可以根据传统 $BP$ 神经
+网络模型的模拟过程建立神经元的输入输出关系模拟出碳排放权市场中重要影响因子与碳排放权价格之间的
+复杂关系。输入层输入重要影响因子，经过隐含层的处理后输出预测结果，即我们所需要的碳交易价格的预
+测结果。
+
+```{r fig1,eval=T, echo=F,fig.cap="BP神经网络算法示意图",dev="png",results='markup', cache=F}
+knitr::include_graphics(".\\result\\BP神经网络算法示意图.png")
+```
+
+
+其具体的实现过程如下：
+
+首先，数据输入。在 $(0,1)$ 范围内随机初始化网络中所有节点的连接权 $w_{ij}$ 和节点的阈值 $θ_{ij}$ ,
+读入经过标准化处理的重要影响因素的样本 $x_k$ 和碳排放交易价格 $y_k$ ;
+
+其次，模型训练。据已知参数计算当前的碳排放交易价格 $\hat y_k$ ，并计算出输出层神经元的梯度项 $g_j$ 
+和隐层神经元的梯度项 $e_h$，计算各层神经元节点的误差信号，反向传播误差，修正权值和阈值；
+
+最后，输出预测值。计算误差，重复上述步骤，直到达到要求的误差范围输出。
