@@ -3,9 +3,6 @@ title: "灰色BP神经网络预测方法"
 author: "马忠芸"
 date: "2019/4/11"
 output:
-  html_document:
-    df_print: paged
-    toc: no
   bookdown::pdf_document2:
     keep_tex: yes
     latex_engine: xelatex
