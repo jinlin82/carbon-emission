@@ -3,11 +3,6 @@ title: "碳排放交易价格影响因素分析及预测"
 author: "Jin"
 date: "2019-03-02"
 output:
-  bookdown::word_document2:
-    fig_caption: true
-    reference_docx: ./style/word-styles-02.docx
-    md_extensions: +east_asian_line_breaks
-    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::html_document2:
     number_sections: true
     seq_numbering: true
@@ -18,6 +13,11 @@ output:
     keep_md: true
     toc: true
     pandoc_args: ["--filter", "pandoc-crossref", "-M", "eqnPrefix="]
+  bookdown::word_document2:
+    fig_caption: true
+    reference_docx: ./style/word-styles-02.docx
+    md_extensions: +east_asian_line_breaks
+    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::pdf_document2:
     keep_tex: yes
     toc: false
@@ -427,6 +427,21 @@ legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=
 
 ### Prophet模型下的碳交易价格预测
 
+#### prophet模型理论介绍
+
+1. 趋势模型（内容包含分段线性回归和逻辑回归的介绍、突变点的生成、在预测时的条件假定）
+2. 季节性（季节部分即产生傅里叶序列，说明N的选择）
+3. 假日效应（做简单介绍）
+
+#### 模型拟合
+
+1. 作图观察序列特征
+2. 设定标准差参数以后拟合模型，对系数做解释
+3. 首先介绍交叉验证，然后通过各项指标对模型作优劣判断
+4. 利用所得模型作预测，作图可视化各效应并解释
+5. 与一般时间序列做预测进行对比
+
+#### 总结
 其次，基于Prophet模型进行预测。根据实际交易情况得知，碳交易市场在节假日及
 休息日不交易，所以本文不考虑假期的影响，重点关注趋势因素，并考虑是否有周期
 因素的影响。根据建立ARMA过程的结果来看，原序列存在异常值，在构建Prophet的
