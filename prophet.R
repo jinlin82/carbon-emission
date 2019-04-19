@@ -107,7 +107,7 @@ plot(m31,forecast31)+add_changepoints_to_plot(m31, threshold = 0.01, cp_color = 
 #as.Date("2018/02/04","%Y/%m/%d")-as.Date("2017/11/25","%Y/%m/%d")
 
 
-#节假日数据
+#节假日数据（文中无假日效应）
 library(dplyr)
 playoffs <- data_frame(
   holiday = 'playoff',
