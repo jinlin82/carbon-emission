@@ -270,7 +270,7 @@ $CV_{(k)}=\frac{1}{k}\sum_{i}^{k}MSE_{i}$ 。从而通过选择一系列 $\lambd
 $$\frac{dX^{(1)}}{dt}+\alpha X^{(1)}= u$$ {#eq:model1}
 
 
-得到灰色模型 $GM(1,1)$ ，求解预测值：
+根据公式[@eq:model1]得到灰色模型 $GM(1,1)$ ，求解预测值：
 
 $$\hat X^{(1)}(k+1)=\left [\hat X^{(1)}(0)-\frac{\hat \mu}{\hat \alpha}\right] e^{-{\hat \alpha}k}+\frac{\hat \mu}{\hat \alpha}$$ {#eq:model2}
 
