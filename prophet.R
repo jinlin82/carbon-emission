@@ -62,19 +62,20 @@ legend("topleft",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0
 library(prophet)
 m3=prophet(history)
 str(history)
-future=make_future_dataframe(m3,periods = 10)
-forecast=predict(m3,future)
-plot(m3,forecast)
-prophet_plot_components(m3,forecast)
-#help("prophet")
-m3$growth
-m3$changepoints
+library(stringr)
+?str_sub
+date=as.character(history$ds)
+date
+str_sub(date[1],6,7)
+help("prophet")
 #m31=prophet(history,yearly.seasonality = TRUE,)
-m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = TRUE)
+plot(history$ds,history$y)
+m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+m31$component.modes
 future31=make_future_dataframe(m31,periods = 10)
 forecast31=predict(m31,future31)
 plot(m31,forecast31)
-prophet_plot_components(m31,forecast)
+prophet_plot_components(m31,forecast31)
 
 #Fourier terms
 N=c(1:10)
@@ -89,14 +90,40 @@ predictvalue=cbind(pre,forecast[c(550:559),19],forecast31[c(550:559),19])
 colnames(predictvalue)=c("ds","armapre","propre")
   
 #cross-validation
-cross=cross_validation(m3,5,units="weeks")
-write.csv(cross,"E:/github_repo/carbon-emission/data/updata/cross.csv")
 as.Date("2017/01/03","%Y/%m/%d")+105
-crossday=cross_validation(m3,90,units="days")
+crossday=cross_validation(m31,180,units="days")
 write.csv(crossday,"E:/github_repo/carbon-emission/data/updata/crossday.csv")
+crossday=read.csv("E:/github_repo/carbon-emission/data/updata/crossday.csv")
+perme=performance_metrics(crossday,metrics="mape",rolling_window = 0.1)
+plot_cross_validation_metric(crossday,metric = "mape",rolling_window = 0.1)
+plot_forecast_component(m31,forecast31,forecast31$weekly,uncertainty = TRUE,plot_cap = FALSE)
+plot(m31,forecast31)+add_changepoints_to_plot(m31, threshold = 0.01, cp_color = "red",cp_linetype = "dashed", trend = TRUE)
 #as.Date("2019/04/01","%Y/%m/%d")-90
 #as.Date("2019/02/15","%Y/%m/%d")-as.Date("2018/11/19","%Y/%m/%d")
 #as.Date("2019/01/01","%Y/%m/%d")-90*0.5+90
 #as.Date("2018/11/17","%Y/%m/%d")-as.Date("2018/07/05","%Y/%m/%d")
+?c
 #as.Date("2017/09/28","%Y/%m/%d")-as.Date("2017/07/06","%Y/%m/%d")
 #as.Date("2018/02/04","%Y/%m/%d")-as.Date("2017/11/25","%Y/%m/%d")
+
+
+#节假日数据（文中无假日效应）
+library(dplyr)
+playoffs <- data_frame(
+  holiday = 'playoff',
+  ds = as.Date(c('2008-01-13', '2009-01-03', '2010-01-16',
+                 '2010-01-24', '2010-02-07', '2011-01-08',
+                 '2013-01-12', '2014-01-12', '2014-01-19',
+                 '2014-02-02', '2015-01-11', '2016-01-17',
+                 '2016-01-24', '2016-02-07')),
+  lower_window = 0,
+  upper_window = 1
+)
+superbowls <- data_frame(
+  holiday = 'superbowl',
+  ds = as.Date(c('2010-02-07', '2014-02-02', '2016-02-07')),
+  lower_window = 0,
+  upper_window = 1
+)
+holidays <- bind_rows(playoffs, superbowls)
+
