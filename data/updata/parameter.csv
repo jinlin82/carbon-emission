@@ -1,0 +1,5 @@
+name,value
+n.changepoints,25
+changepoint.range ,0.8
+seasonality.prior.scale,10
+changepoint.prior.scale,0.05
