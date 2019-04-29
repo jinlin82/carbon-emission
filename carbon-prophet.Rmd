@@ -565,6 +565,13 @@ delta=as.data.frame(t(m31$params$delta))
 beta=as.data.frame(t(m31$params$beta))
 ```
 
+```{r eval=FALSE, include=FALSE}
+#周期为5
+history2=read.csv("./data/updata/guangdong2.csv")
+weekly=add_seasonality(history2,name="weekly" ,period=5, fourier.order=3, prior.scale = 10,mode="additive")
+#prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
+m32=prophet(history2,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+```
 根据碳交易在节假日不交易的特征，本文的prophet预测模型只包括趋势模型、季节模型和随
 机误差三部分，模型构建结果如下：
 
