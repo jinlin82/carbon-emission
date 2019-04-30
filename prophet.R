@@ -61,17 +61,9 @@ legend("topleft",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0
 #prophet模型
 library(prophet)
 m3=prophet(history)
-str(history)
-library(stringr)
-?str_sub
-date=as.character(history$ds)
-date
-str_sub(date[1],6,7)
-help("prophet")
 #m31=prophet(history,yearly.seasonality = TRUE,)
 plot(history$ds,history$y)
 m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
-m31$component.modes
 future31=make_future_dataframe(m31,periods = 10)
 forecast31=predict(m31,future31)
 plot(m31,forecast31)
@@ -102,7 +94,6 @@ plot(m31,forecast31)+add_changepoints_to_plot(m31, threshold = 0.01, cp_color = 
 #as.Date("2019/02/15","%Y/%m/%d")-as.Date("2018/11/19","%Y/%m/%d")
 #as.Date("2019/01/01","%Y/%m/%d")-90*0.5+90
 #as.Date("2018/11/17","%Y/%m/%d")-as.Date("2018/07/05","%Y/%m/%d")
-?c
 #as.Date("2017/09/28","%Y/%m/%d")-as.Date("2017/07/06","%Y/%m/%d")
 #as.Date("2018/02/04","%Y/%m/%d")-as.Date("2017/11/25","%Y/%m/%d")
 

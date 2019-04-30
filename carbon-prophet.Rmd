@@ -501,7 +501,8 @@ $$\forall j>T,\;\;\;\left \{ \begin{array}{l} \delta_j=0 \;\;\;w.p. \frac{T-S}{T
 时间序列常呈现出一定的周期性，用考虑了季节效应的模型做预测对提高预测准确性起到很大作用。下
 面对prophet预测模型的季节效应做简单介绍。
 
-时间序列的周期性通过傅里叶序列给出，设定 $P$ 为周期长度。对于以天为单位的序列，若以年为周期， 
+时间序列的周期性通过傅里叶序列给出，傅里叶级数能够通过正弦函数和余弦函数的组合对周期性进行描
+述。设定 $P$ 为周期长度，对于以天为单位的序列，若以年为周期， 
 则 $P=365.25$ ；若以周为周期，则 $P=7$ 。具体的季节效应可表示为以下公式：
 
 $$s(t)=\sum_{n=1}^{N}\left(a_n cos\left(\frac{2\pi nt}{P}\right)+b_n sin\left (\frac{2\pi nt}{P}\right)\right)$$ {#eq:model26}
@@ -530,6 +531,7 @@ prpphet预测对此的处理是通过设置假日可能存在的日期区间来�
 #### 模型拟合
 
 1. 作图观察序列特征
+
 ```{r echo=FALSE}
 history=read.csv("./data/updata/guangdong.csv")
 history$date=as.Date(history$date,"%Y/%m/%d")
@@ -538,9 +540,111 @@ plot(history$y,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",ylim=c(1
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
 ```
 
+观察上述序列，碳交易价格的时间序列呈现出一定的趋势性，在不同阶段有不同趋势特征，同时伴随周期
+性波动，下面尝试用prophet模型对该序列进行刻画。
+
 2. 设定标准差参数以后拟合模型，对系数做解释
+
+在模型拟合之前，先进行参数设置，具体结果见下表：
+
+```{r tab9, eval=T,results='markup', cache=F}
+tab9 <- read.csv('./data/updata/parameter.csv')
+knitr::kable(tab9, row.names =F, align = "l", caption="参数设置表",
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
+
+表中n.changepoints表示产生突变点的个数；changepoint.range表示在时间序列的前80%均
+匀生成指定数目的突变点；seasonality.prior.scale表示季节模型的灵活度，该值的设置
+应随着季节性波动的增加而增加；同理，changepoint.prior.scale表示突变点的灵活性，其
+值越大，产生突变点个数越多。本文在参数设置时均采用默认值。
+
+```{r include=FALSE}
+library(prophet)
+m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+delta=as.data.frame(t(m31$params$delta))
+beta=as.data.frame(t(m31$params$beta))
+```
+
+```{r eval=FALSE, include=FALSE}
+#周期为5
+history2=read.csv("./data/updata/guangdong2.csv")
+weekly=add_seasonality(history2,name="weekly" ,period=5, fourier.order=3, prior.scale = 10,mode="additive")
+#prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
+m32=prophet(history2,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+```
+根据碳交易在节假日不交易的特征，本文的prophet预测模型只包括趋势模型、季节模型和随
+机误差三部分，模型构建结果如下：
+
+$$\begin{array}{l}
+y(t)=g(t)+s(t)+\epsilon_t \\
+g\left( t \right) = ( -0.8713986 +\boldsymbol \alpha (t)^T\boldsymbol\delta)t + (0.7877784 + \boldsymbol\alpha(t)^T\boldsymbol\gamma)  )\\
+{\gamma _j} = \left( {{s_j} -0.7877784 - \mathop \sum \limits_{l < j} {\gamma _l}} \right)\left( {1 - \frac{{ -0.8713986 + \mathop \sum \nolimits_{l < j} {\delta _l}}}{{ -0.8713986 + \mathop \sum \nolimits_{l \le j} {\delta _l}}}} \right)\\
+s\left( t \right) = X\left( t \right)\boldsymbol\beta 
+\end{array}$$ {#eq:model29}
+
 3. 首先介绍交叉验证，然后通过各项指标对模型作优劣判断
+
+在利用prophet预测模型之前，需要对模型优劣进行判断,本文选用MAPE指标。prophet模型采用历史模拟预测的
+方法，获得基于特定时点的预测值，通过与真实值进行比较，最后计算得到MAPE指标。下面对prophet预测模型
+的历史模拟预测方法进行介绍。
+
+该方法要求制定预测时点和预测区间 $H$，并且保证预测区间范围内的数据属于历史数据，否则无法进行误差判。
+故这也成为该方法的一个优点，即容易识别预测错误。但该方法也有两个缺点。第一，若模拟预测越多，则产生
+的误差相关性就越强。以一个极端例子为例，在日数据中，若基于每个日时点做预测，则产生的误差结果不会有
+太大差异。第二，若模拟预测过少，则产生的用于计算模型准确性的误差就越少。为此，一般规定每 $H/2$ 个区
+间做一次预测，即在进行历史模拟预测时，设置突变点的间距为 $H/2$ 。
+
+本文以预测区间为 $H=90$ 对模型进行准确度判断，在 $2017-10-08$ 到 $2019-01-01$ 期间做了11次预测
+
+```{r include=FALSE}
+crossday=cross_validation(m31,90,units="days")#运行时间略长
+```
+
+```{r fig-metric, fig.cap="mape", dev='png', include=FALSE}
+plot_cross_validation_metric(crossday,metric = "mape",rolling_window =0.1)
+```
+
+上图给出了模型的平均绝对百分比误差MAPE，结果显示模型拟合较好，MAPE在0.2以下。
+
 4. 利用所得模型作预测，作图可视化各效应并结合实际情况解释
+
+本文利用上述所得模型对 $2019-04-02$ 到 $2019-04-12$ 的碳交易价格进行预测，所得结果
+如表 \@ref(tab:predict) ,列出了未来10期的预测情况。
+
+```{r predict, echo=FALSE, results='markup'}
+future31=make_future_dataframe(m31,periods = 10)
+forecast31=predict(m31,future31)
+forecast=forecast31[550:559,-(12:14)]
+knitr::kable(forecast, row.names =F, align = "l", caption="predict",
+      longtable = TRUE, booktabs = TRUE, linesep  = "")
+```
+
+表 \@ref(tab:predict) 中给出了碳交易价格 $y$ 及其组成部分各周期效应的预测值和
+置信区间，$trend$ 表示趋势性预测值，$additive_terms$ 表示按加法模型计算的不同周期
+效应的总和,按周期的不同分为 $P=7$ 的周效应和 $p=375.25$ 的季节效应，具体计算数值分别
+由 $weekly$ 和 $yearly_upper$ 给出, $yhat$ 表示最终计算得到的碳交易价格预测值，$yhat_lower$ 和
+$yhat_upper$ 分别指预测值的95%置信区间下限和上限，其余预测值与此类似。
+
+```{r predict1, echo=FALSE, fig.cap="mape", dev='png'}
+plot(m31,forecast31)
+```
+
+根据表 \@ref(tab:predict) 可以得到图 \@ref(fig:predict1) ,该图给出了历史数据、预测数据、模型
+拟合值，蓝色区域表示预测区间。可以判断，除了个别异常值，大部分历史数据都包含在模型拟合值的
+置信区间内，表明模型效果良好。
+
+```{r component, echo=FALSE, fig.cap="mape", dev='png'}
+prophet_plot_components(m31,forecast31)
+```
+
+图 \@ref(fig:component) 给出了碳交易价格的各组成部分的拟合情况，从第一张图可以看出，碳交易价格的
+长期趋势大致经历了从先下降，到后缓慢增长，再到快速增长的3个阶段，第一阶段为 $2017-07$ 之前的下
+降阶段，第二阶段大致为 $2017-07$ 到 $2018-09$ ，期间碳交易价格呈缓慢增长趋势，$2018-09$ 到
+$2018-09$ 为碳交易价格快速增长的第三阶段。第二张图显示的是周效应，可以看出除了星期二、星期六、星期日
+以外，其余天数的周效应均为负数，其中星期三最低，星期日最高，整体来看有较大的
+波动性。第三张图给出的是季节效应，碳交易价格的季节效应较高值倾向于出现在六月份和11月上旬，最低值在二月中旬和七
+月中旬，且大部分时间处于0水平以下。
+
 5. 与一般时间序列做预测进行对比
 
 #### 总结
@@ -557,7 +661,7 @@ y(t)=g(t)+s(t)+\epsilon_t \\
 g\left( t \right) = ( - 0.45 + 0.03\alpha \left( {t{)^T}} \right)t + (0.91 + \alpha \left( {t{)^T}\gamma } \right)\\
 {\gamma _j} = \left( {{s_j} + 0.45 - \mathop \sum \limits_{l < j} {\gamma _l}} \right)\left( {1 - \frac{{ - 0.45 + \mathop \sum \nolimits_{l < j} {\delta _l}}}{{ - 0.45 + \mathop \sum \nolimits_{l \le j} {\delta _l}}}} \right)\\
 s\left( t \right) = X\left( t \right)\beta 
-\end{array}$$ {#eq:model9}
+\end{array}$$ {#eq:model30}
 
 根据上述模型进行预测，得到表 \@ref(tab:tab-9) 所示结果，红色曲线的尾部未来10期
 呈现出下降趋势，其波动幅度较ARMA方法相比范围更大，但碳交易价格水平基本稳定在13-14元。
