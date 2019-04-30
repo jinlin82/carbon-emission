@@ -25,7 +25,7 @@ output:
     md_extensions: +east_asian_line_breaks
     pandoc_args: ["--listing", "--filter", "pandoc-crossref"]
 css: ./style/markdown.css
-autoEqnLabels: true
+autoEqnLabels: false
 eqnPrefixTemplate: ($$i$$)
 linkReferences: true
 bibliography: Bibfile.bib
@@ -442,7 +442,7 @@ legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=
 
 prophet预测模型包含三个成分，分别是趋势、季节性、假期。
 
-$$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\varepsilon_t$$ {#eq:model9}
+$$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\varepsilon_t$$ {#eq:model-prophet}
 
 式中, $g{(t)}$ 用来对时间序列的非周期性即趋势性进行建模，$s{(t)}$表示周期性变化，
 如常见的周和季节性，$h{(t)}$ 表示假日效应，每个假日的时间在较短的时间范围内变动，
@@ -462,16 +462,16 @@ $$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\varepsilon_t$$ {#eq:model9}
 若定义向量 $\boldsymbol a(t) \in {0,1}^S$ 和 $\boldsymbol \delta $ ，并且$\boldsymbol a(t)$ 
 中的 $a_j(t)$ 为：
 
-$$a_j(t)=\left \{ \begin{array}{l} 1,\;\;t\geq s_j\\ 0,\;\;其他 \end{array} \right.$$ {#eq:mode20}
+$$a_j(t)=\left \{ \begin{array}{l} 1,\;\;t\geq s_j\\ 0,\;\;其他 \end{array} \right.$$ {#eq:model20}
 
 则 $t$ 时刻的增长率可以表示为 $k+\boldsymbol a(t)^T \boldsymbol\delta$ 。增长率发生变化，则
 截距项也会有相应的变化，$m$ 在第 $j$ 个突变点的调整为：
 
-$$\gamma_j=\left (s_j-m-\sum_{l<j}\gamma_l\right) \left (1-\frac{k+\sum_{l<j}\delta_l} {k+\sum_{l\leq j}\delta_l}\right)$$ {#eq:mode21}
+$$\gamma_j=\left (s_j-m-\sum_{l<j}\gamma_l\right) \left (1-\frac{k+\sum_{l<j}\delta_l} {k+\sum_{l\leq j}\delta_l}\right)$$ {#eq:model21}
 
 最终的分段线性模型如下：
 
-$$g(t)=(k+\boldsymbol a(t)^T\boldsymbol \delta )t+(m+\boldsymbol a(t)^T \boldsymbol\gamma )$$ {#eq:mode22}
+$$g(t)=(k+\boldsymbol a(t)^T\boldsymbol \delta )t+(m+\boldsymbol a(t)^T \boldsymbol\gamma )$$ {#eq:model22}
 
 式 [@eq:model22] 中 $\delta$  可以自行设置也可以通过公式自动生成，自行设置指提前已知使时
 间序列过去和未来发生重大改变的事件时刻；自动生成即假定突变点个数，并且 $\delta_j \sim Laplace(0,\tau)$ ,
@@ -480,18 +480,18 @@ $$g(t)=(k+\boldsymbol a(t)^T\boldsymbol \delta )t+(m+\boldsymbol a(t)^T \boldsym
  $logistic$ 增长模型主要应用于具有类似于人口增长特征的时间序列，刚开始呈指数增长，后
 来随着接近饱和，速度越来越慢，最后停止增长。这种增长可以用以下公式来描述：
 
-$$g{(t)}=\frac{C}{1 + exp(-k(t - m))}$$ {#eq:mode23}
+$$g{(t)}=\frac{C}{1 + exp(-k(t - m))}$$ {#eq:model23}
 
 式中，$k$ 表示增长率， $m$ 表示补偿参数， $C$表示容载量，增加了参数调整以后的模型为：
 
-$$g(t)=\frac{C(t)}{1 + exp(-(k+\boldsymbol a(t)^T\boldsymbol{\delta})(t - (m+\boldsymbol a(t)^T\boldsymbol\gamma))}$$ {#eq:mode24}
+$$g(t)=\frac{C(t)}{1 + exp(-(k+\boldsymbol a(t)^T\boldsymbol{\delta})(t - (m+\boldsymbol a(t)^T\boldsymbol\gamma))}$$ {#eq:model24}
 
 与式 [@eq:model24] 不同的是，我们假定容载量 $C(t)$ 不是参数，在模型构建时，需要结合实际
 情况设定。
 
 在趋势模型的预测部分，通常通过如下方式定义突变点
 
-$$\forall j>T,\;\;\;\left \{ \begin{array}{l} \delta_j=0 \;\;\;w.p. \frac{T-S}{T},\\ \delta_j \sim Laplace(0,\lambda ) \;\;\;w.p.\frac{S}{T}.\end{array} \right.$$ {#eq:mode25}
+$$\forall j>T,\;\;\;\left \{ \begin{array}{l} \delta_j=0 \;\;\;w.p. \frac{T-S}{T},\\ \delta_j \sim Laplace(0,\lambda ) \;\;\;w.p.\frac{S}{T}.\end{array} \right.$$ {#eq:model25}
 
 并且假定未来突变点的平均频率和平均调整幅度与历史数据保持一致，$\lambda$ 的设定将根据历史
 数据的推断给出。
@@ -504,15 +504,15 @@ $$\forall j>T,\;\;\;\left \{ \begin{array}{l} \delta_j=0 \;\;\;w.p. \frac{T-S}{T
 时间序列的周期性通过傅里叶序列给出，设定 $P$ 为周期长度。对于以天为单位的序列，若以年为周期， 
 则 $P=365.25$ ；若以周为周期，则 $P=7$ 。具体的季节效应可表示为以下公式：
 
-$$s(t)=\sum_{n=1}^{N}\left(a_n cos\left(\frac{2\pi nt}{P}\right)+b_n sin\left (\frac{2\pi nt}{P}\right)\right)$$ {#eq:mode26}
+$$s(t)=\sum_{n=1}^{N}\left(a_n cos\left(\frac{2\pi nt}{P}\right)+b_n sin\left (\frac{2\pi nt}{P}\right)\right)$$ {#eq:model26}
 
 拟合季节效应需要估计 $2N$ 个参数。对于 $P=365.25$ 的年周期，假定 $N=10$ 时，用向量可表示为
 
-$$s(t)=X(t)\boldsymbol \beta$$ {#eq:mode27}
+$$s(t)=X(t)\boldsymbol \beta$$ {#eq:model27}
 
 其中，
 
-$$X(t)=\left[cos\left(\frac{2\pi (1)t}{365.25}\right),\cdots,sin2\left(\frac{2\pi (10)t}{365.25}\right) \right]$$ {#eq:mode28}
+$$X(t)=\left[cos\left(\frac{2\pi (1)t}{365.25}\right),\cdots,sin2\left(\frac{2\pi (10)t}{365.25}\right) \right]$$ {#eq:model28}
 
 大量实践证明，当以年或者周为周期时，分别设定 $N=10$  ， $N=3$ 使得模型拟合效果较佳。
 
