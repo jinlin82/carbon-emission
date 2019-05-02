@@ -570,6 +570,7 @@ beta=as.data.frame(t(m31$params$beta))
 history2=read.csv("./data/updata/guangdong2.csv")
 weekly=add_seasonality(history2,name="weekly" ,period=5, fourier.order=3, prior.scale = 10,mode="additive")
 #prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
+history$ds=as.Date(history$ds,"%Y/%m/%d")
 m32=prophet(history2,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
 ```
 根据碳交易在节假日不交易的特征，本文的prophet预测模型只包括趋势模型、季节模型和随
@@ -622,8 +623,8 @@ knitr::kable(forecast, row.names =F, align = "l", caption="predict",
 表 \@ref(tab:predict) 中给出了碳交易价格 $y$ 及其组成部分各周期效应的预测值和
 置信区间，$trend$ 表示趋势性预测值，$additive_terms$ 表示按加法模型计算的不同周期
 效应的总和,按周期的不同分为 $P=7$ 的周效应和 $p=375.25$ 的季节效应，具体计算数值分别
-由 $weekly$ 和 $yearly_upper$ 给出, $yhat$ 表示最终计算得到的碳交易价格预测值，$yhat_lower$ 和
-$yhat_upper$ 分别指预测值的95%置信区间下限和上限，其余预测值与此类似。
+由 weekly 和 yearly_upper给出, yhat 表示最终计算得到的碳交易价格预测值，yhat_lower 和
+yhat_upper 分别指预测值的95%置信区间下限和上限，其余预测值与此类似。
 
 ```{r predict1, echo=FALSE, fig.cap="mape", dev='png'}
 plot(m31,forecast31)
@@ -644,6 +645,26 @@ $2018-09$ 为碳交易价格快速增长的第三阶段。第二张图显示的�
 以外，其余天数的周效应均为负数，其中星期三最低，星期日最高，整体来看有较大的
 波动性。第三张图给出的是季节效应，碳交易价格的季节效应较高值倾向于出现在六月份和11月上旬，最低值在二月中旬和七
 月中旬，且大部分时间处于0水平以下。
+
+```{r}
+period=read.csv("./data/updata/period.csv")
+colnames(period)=c('ds1','y1','volume1','ds2','y2','volume2','ds3','y3','volume3')
+summary=lapply(period[,-c(1,4,7)],summary)
+summary$volume1[4]
+```
+
+prophet模型将碳交易价格的时间序列分为三个阶段，对每个阶段的交易价格和交易量进行分析可以得出：
+1.第一阶段交易量为0的只有0.8%，第二阶段交易量为0的天数占比16.8%，第三阶段交易量为0的天数占比1.7%；
+2.第一阶段的平均日交易量最高，为 'r summary$volume1[4]' ；第二阶段的平均日交易量虽然高于第三阶段
+的平均日交易量，但第三阶段的日平均交易价格最高，为 'r summary$y3[4]' ,第二阶段的日平均价格最低，
+为 'r summary$y2[4]' 。
+
+从供需角度进行分析可以发现，第二阶段的碳交易价格水平较低主要受市场需求影响。2017年度和2018年度广
+东省二氧化碳配额总量均为4.22亿吨，其中，控排企业配额均为3.99亿吨；有偿发放总量均为200万吨，免费配
+额比例均为电力企业95%，其他企业97%，所以受供给影响不大。从需求角度来看，2018年排放二氧化碳2万吨以
+上的控排企业较2017年的246新增3家，新建项目企业数量从50减少至39，数量总体有所下降，因为新建项目企
+业在成为控排企业之前，所需配额以有偿方式购得，控排企业虽然有所增加，但95%以上的配额是免费发放。
+除此之外，企业所得配额受产量和生产技术影响。第三阶段，碳交易价格又重新上涨，所以排除在短时间内，企业生产技术提升的可能性，可以判断，第二阶段的碳交易价格下降主要受企业产量下降影响，导致所需配额减少，从而发生供给不变的情况下市场价格下降的情况。
 
 5. 与一般时间序列做预测进行对比
 
