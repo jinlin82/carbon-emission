@@ -1,7 +1,7 @@
 ###问题1：prophet函数中的yearly.seasonality="TRUE","auto","FALSE",以及“Fourier terms”有什么区别
 ###问题2：Fourier terms中的x(t),t是否需要从1开始重新编号
 ###问题3：simulated historical forecast是如何处理误差的 
-rm=list()
+rm(list=ls())
 history=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong.csv")
 #help("as.Date")
 
