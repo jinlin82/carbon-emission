@@ -64,11 +64,13 @@ m3=prophet(history)
 #m31=prophet(history,yearly.seasonality = TRUE,)
 plot(history$ds,history$y)
 m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+m31$changepoints
+str(m31)
 future31=make_future_dataframe(m31,periods = 10)
 forecast31=predict(m31,future31)
 plot(m31,forecast31)
 prophet_plot_components(m31,forecast31)
-
+?prophet
 #Fourier terms
 N=c(1:10)
 n=c(1,2,3)
@@ -117,4 +119,16 @@ superbowls <- data_frame(
   upper_window = 1
 )
 holidays <- bind_rows(playoffs, superbowls)
-
+help(package="prophet")
+?prophet
+rm(list=ls())
+monday=read.csv("E:/github_repo/carbon-emission/data/updata/monday.csv")
+tuesday=read.csv("E:/github_repo/carbon-emission/data/updata/tuesday.csv")
+Wednesday=read.csv("E:/github_repo/carbon-emission/data/updata/Wednesday.csv")
+Thurday=read.csv("E:/github_repo/carbon-emission/data/updata/Thurday.csv")
+Friday=read.csv("E:/github_repo/carbon-emission/data/updata/Friday.csv")
+plot(monday$dealprice,type="b",lty=0,col="red",ylim=c(12,20))
+lines(tuesday$dealprice,type="b",lty=0,col="black",ylim=c(12,20))
+lines(Wednesday$dealprice,type="b",lty=0,col="green",ylim=c(12,20))
+lines(Thurday$dealprice,type="b",lty=0,col="blue",ylim=c(12,20))
+lines(Friday$dealprice,type="b",lty=0,col="yellow",ylim=c(12,20))
