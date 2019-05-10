@@ -2,7 +2,7 @@
 ###问题2：Fourier terms中的x(t),t是否需要从1开始重新编号
 ###问题3：simulated historical forecast是如何处理误差的 
 rm(list=ls())
-history=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong.csv")
+history=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong2.csv")
 #help("as.Date")
 
 history$date=as.Date(history$date,"%Y/%m/%d")
@@ -11,54 +11,130 @@ colnames(history)=c("ds","y")
 #arma模型
 ##平稳性检验
 library(tseries)
-pp.test(history$y)#10%的显著性水平下平稳
-
+pp.test(history$y)
+dh=diff(history$y)
+pp.test(dh)
 
 ##自相关
 par(mfrow=c(2,1)) 
 
-acf(history$y,main="",xlab="滞后期",ylab="ACF")#画自相关图
+acf(dh,main="",xlab="滞后期",ylab="ACF")#画自相关图
 title(main = "(a)the ACF of dealprice",cex.main=0.95)
 
-pacf(history$y,main="",xlab="滞后期",ylab="PACF",las=1)#画偏自相关图
+pacf(dh,main="",xlab="滞后期",ylab="PACF",las=1)#画偏自相关图
 title(main="(b)the PACF of dealprice",cex.main=0.95)
 
 ##模型拟合
-m1=arima(history$y,order=c(1,0,1))
-
+Box.test(dh,lag=10,type="Ljung")
+m1.1=arima(history$y,order=c(1,1,1))
+m1.0=arima(history$y,order=c(1,1,0))
+m1.2=arima(history$y,order=c(2,1,0))
+m1.3=arima(history$y,order=c(0,1,1))
+m1.4=arima(history$y,order=c(0,1,2))
+Box.test(m1.1$residuals,lag=10,type="Ljung")
+Box.test(m1.0$residuals,lag=10,type="Ljung")
+Box.test(m1.2$residuals,lag=10,type="Ljung")
+Box.test(m1.3$residuals,lag=10,type="Ljung")
+Box.test(m1.4$residuals,lag=10,type="Ljung")
 ##获取残差序列
-resid=m1$residuals
+resid=m1.1$residuals
 plot(resid)
+auto.arima(history$y)
+plot(predict(m1.1,n.ahead=10)$pred)
+#正态性检验
+jarque.bera.test(resid)
+shapiro.test(resid)
+#异常值检验
+#summary(history$y)
+#boxplot(history$y)
+#hist(resid,main=NULL,breaks = 50)
+#qqnorm(resid,main =NULL)
+#qqline(resid)
+which(abs(resid)>3)
+resid[431]
+resid0=resid[-434]
+Box.test(resid0,lag=10,type="Ljung")
+ArchTest(resid0,lag=12) 
 
-par(mfrow=c(2,1))
+#jarque.bera.test(resid)
+#shapiro.test(resid)
+plot(history$y)
+hist(resid0,main=NULL,breaks = 50)
+qqnorm(resid0,main =NULL)
+qqline(resid0)
+##ARCH效应检验
+library(FinTS)
+ArchTest(resid,lag=12)  #存在ARCH效应
+
+par(mfrow=c(1,1))
+plot(resid)
 rt.square<-resid^2
 acf(rt.square,main="",xlab="lag(c)",ylab="ACF",las=1)#画自相关图
 title(main = "(c)the ACF of resi Square",cex.main=0.95)
 pacf(rt.square,main="",xlab="Lag(d)",ylab="PACF",las=1)#画偏自相关图
 title(main = "(d)the PACF of resi Square",cex.main=0.95)
 
-##ARCH效应检验
-library(FinTS)
-ArchTest(resid,lag=12)  #存在ARCH效应
-
 library(fGarch)
-m2=garchFit(~arma(1,1)+garch(1,1),data=history$y)
-pre=predict(m2,n.ahead=10)
+help(package="fGarch")
+fit2.1=garchFit(formula = ~arma(1,1)+garch(1,1),data=dh,cond.dist = c("norm"))
+resid1=fit2.1@residuals
+plot(resid1)
+#which(abs(resid1)>3)
+#resid1[430]
+#resid1[433]
+
+Box.test(resid1,lag=10,type="Ljung")
+ArchTest(resid1,lag=12) 
+?garchFit
+library(rugarch)
+?ugarchspec
+garch_mod=ugarchspec(variance.model = list(garchOrder=c(1,1)),mean.model=list(armaOrder=c(1,1)))
+fit.2=ugarchfit(spec=garch_mod,data=dh)
+resid2=fit.2@fit$residuals
+Box.test(resid2,lag=10,type="Ljung")
+Box.test(resid2^2,lag=10,type="Ljung")
+ArchTest(resid2,lag=20) 
+#########################################################指数平滑法###############
+library(forecast)
+fit2=ets(history$y)
+pre2=predict(fit2,n.ahead=10)
+
+str(m1.1)
+#预测
+arima=predict(m1.1,n.ahead=10)$pred
+ets=predict(fit2,n.ahead=10)[["mean"]]
 #?seq.Date
-pre$ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
-pre=as.data.frame(pre[,c(4,1)])
-colnames(pre)=c("ds","value")
-fitvalue=data.frame(history$ds,m2@fitted)
-colnames(fitvalue)=c("ds","value")
-arma.his=rbind(fitvalue,pre)#将拟合值与预测值合并
+pre=as.data.frame(cbind(arima,ets))
+ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
+pre=cbind(ds,pre)
+str(m1.1$residuals)
+str(fitvalue1)
+resid1=data.frame(history$ds,as.numeric(m1.1$residuals))
+fitvalue1=data.frame(history$ds,as.numeric(fitted(m1.1)))
+colnames(fitvalue1)=c("ds","value1")
+resid2=as.data.frame(as.numeric(fit2[["residuals"]]))
+value2=as.data.frame(as.numeric(fit2[["fitted"]]))
+resid=cbind(resid1,resid2)
+colnames(resid)=c("ds","arima","ets")
+fitvalue=cbind(fitvalue1,value2)
+colnames(fitvalue)=c("ds","arima","ets")
+value=rbind(fitvalue,pre)#将拟合值与预测值合并
 ##
 par(mfrow=c(1,1))
-plot(arma.his,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7,ylim=c(11,19))
-points(history$y,lty=2,type="b",pch=4)
+plot(value$arima,lty=1,type="b",pch=10,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7,ylim=c(11,22))
+lines(history$y,lty=1,type="b",pch=4,col="blue")
+lines(value$ets,lty=0,type="b",pch=5,col="red")
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
-legend("topleft",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
+legend("topleft",c("预测值","真实值"),pch=c(10,4),lty=c(1,2),bty="n",cex=0.7)
 
-#prophet模型
+par(mfrow=c(1,1))
+plot(resid$arima,lty=1,type="b",pch=10,xlab="日期",ylab="residuals",xaxt="n",cex.lab=0.8,cex.axis=0.7)
+lines(resid$ets,lty=2,type="b",pch=5,col="red")
+axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
+legend("topleft",c("arima","ets"),pch=c(10,5),lty=c(1,2),bty="n",cex=0.7)
+plot(resid$ets)
+which(abs(resid$ets)>3)
+#################################################################prophet模型
 library(prophet)
 m3=prophet(history)
 #m31=prophet(history,yearly.seasonality = TRUE,)
@@ -132,3 +208,9 @@ lines(tuesday$dealprice,type="b",lty=0,col="black",ylim=c(12,20))
 lines(Wednesday$dealprice,type="b",lty=0,col="green",ylim=c(12,20))
 lines(Thurday$dealprice,type="b",lty=0,col="blue",ylim=c(12,20))
 lines(Friday$dealprice,type="b",lty=0,col="yellow",ylim=c(12,20))
+
+guangdong2=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong2.csv")
+guangdong2$weekday=factor(guangdong2$weekday)
+library(ggplot2)
+head(guangdong2)
+ggplot(data=guangdong2,mapping=aes(x=guangdong2$date,y=guangdong2$dealprice,colour=guangdong2$weekday))+geom_point(size=2,ylim=c(11,20))
