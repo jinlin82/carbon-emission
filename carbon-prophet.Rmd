@@ -140,7 +140,7 @@ $$y(t)=g(t)+s(t)+h(t)+\epsilon_t$$ {#eq:model3}
 
 prophet预测模型包含三个成分，分别是趋势、季节性、假期。
 
-$$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\epsilon_t$$ {#eq:model-prophet}
+$$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\epsilon_t$$n {#eq:model-prophet}
 
 式中, $g{(t)}$ 用来对时间序列的非周期性即趋势性进行建模，$s{(t)}$表示周期性变化，
 如常见的周和季节性，$h{(t)}$ 表示假日效应，每个假日的时间在较短的时间范围内变动，
@@ -173,7 +173,7 @@ $$\gamma_j=\left (s_j-m-\sum_{l<j}\gamma_l\right) \left (1-\frac{k+\sum_{l<j}\de
 
 $$g(t)=(k+\boldsymbol a(t)^T\boldsymbol \delta )t+(m+\boldsymbol a(t)^T \boldsymbol\gamma )$$ {#eq:model22}
 
-#### $logistic$ 增长模型
+#### logistic曲线 增长模型
 
  $logistic$ 增长模型主要应用于具有类似于人口增长特征的时间序列，刚开始呈指数增长，后
 来随着接近饱和，速度越来越慢，最后停止增长。这种增长可以用以下公式来描述：
@@ -244,7 +244,7 @@ $$\boldsymbol\beta=[a_1,b_1,a_2,b_2\cdots,a_N,b_N]^T$$
 题。但特殊日期通常不遵循周期模式，一般的平滑处理不能给出合适的描述。对此，prophet预测模型提出以下方法
 解决特殊日期带来的假日效应。
 
-该方法具体指的是提供所研究时间区域内的假日数据列表，包括历史数据和要预测的未来可能包括的假日，如表 \@ref(tab:tab7) 
+该方法具体指的是提供所研究时间区域内的假日数据列表，包括历史数据和要预测的未来可能包括的假日，如表 \@ref(tab:tab-7) 
 所示。需要注意不同国家的节日日期可能不同。在拟合模型时，假定各假日的影响间保持独立，并且考虑了假日效应
 的持续性，即对于每个假日 $i$ ,相应地，有一个区间 $D_i$ ，该区间表示包含某假日在内的持续几天时间，并认为
 该期间具有相同的假日效应。具体设置通过参数 lower_window 和 upper_window 实现。lower_window是负数，表示
@@ -269,7 +269,7 @@ knitr::kable(tab7, row.names =F, align = "l", caption="holidays",
 对于序列的季节效应和假日效应，在实际构建模型时，需将其整合为矩阵 $X$ ,突变点 $a(t)$ 则用矩阵 $A$ 表示，
 得到最终 [@eq:model-prophet] 中的模型，具体实现代码见图 \@ref(fig:fig-code)
 
-```{r fig-code, echo=FALSE, fig.cap="mape", dev='png'}
+```{r fig-code, echo=FALSE, fig.cap='map', dev='png',results='markup'}
 knitr::include_graphics("./data/updata/code.png")
 ```
 
@@ -278,9 +278,8 @@ $\epsilon$ 和 $beta$ 也服从正态分布；$Laplace(0,\tau)$ 分布又称为 
 估计使用的是LBFGS方法。
 
 ### 模型总结
-
-综合以上描述，可以发现prophet模型在具体应用时具有很强的便捷性和灵活性。对于市场容量等需要使用非线性
-增长模型进行预测的问题，不同阶段对应的 $C(t)$可能发生变化，这时只需使用者结合实际背景做出调整即可。
+-综合以上描述，可以发现prophet模型在具体应用时具有很强的便捷性和灵活性。对于市场容量等需要使用非线性
+-增长模型进行预测的问题，不同阶段对应的 $C(t)$可能发生变化，这时只需使用者结合实际背景做出调整即可。
 并且，模型中突变点的设置也十分灵活，可以使用 $changepoints$ 参数直接指定突变点日期。同时对于季节效应和
 假日效应，使用者既可以直接对特定时间段的节假日进行设置，又可以通过参数 $\sigma$ 和 $\nu$ 调节效应
 的变异性。在拟合模型时，若结合好的可视化工具，便能快速对模型拟合情况进行判断，一旦发现某些时间点的
@@ -361,7 +360,7 @@ legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=
 history=read.csv("./data/updata/guangdong.csv")
 history$date=as.Date(history$date,"%Y/%m/%d")
 colnames(history)=c("ds","y")
-plot(history$y,type="l",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7)
+plot(history$y,type="p",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7)
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
 ```
 
@@ -391,12 +390,24 @@ beta=as.data.frame(t(m31$params$beta))
 ```
 
 ```{r eval=FALSE, include=FALSE}
+#prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
 #周期为5
 history2=read.csv("./data/updata/guangdong2.csv")
-weekly=add_seasonality(history2,name="weekly" ,period=5, fourier.order=3, prior.scale = 10,mode="additive")
-#prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
-history$ds=as.Date(history$ds,"%Y/%m/%d")
-m32=prophet(history2,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
+history2$ds=as.Date(history2$ds,"%Y/%m/%d")
+
+
+m <- prophet(weekly.seasonality=TRUE, changepoint.prior.scale = 0.005)
+
+m <- prophet(weekly.seasonality=FALSE, changepoint.prior.scale = 0.05)
+m <- add_seasonality(m, name='working', period=5, fourier.order=3)
+m <- fit.prophet(m, history2)
+
+future <- make_future_dataframe(m, periods = 30)
+forecast <- predict(m, future)
+plot(m, forecast)
+
+prophet_plot_components(m, forecast)
+
 ```
 
 根据碳交易在节假日不交易的特征，本文的prophet预测模型只包括趋势模型、季节模型和随
