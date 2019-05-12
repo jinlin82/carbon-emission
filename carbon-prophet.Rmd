@@ -3,11 +3,6 @@ title: "碳排放交易价格影响因素分析及预测"
 author: "Jin"
 date: "2019-03-02"
 output:
-  bookdown::word_document2:
-    fig_caption: true
-    reference_docx: ./style/word-styles-02.docx
-    md_extensions: +east_asian_line_breaks
-    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::html_document2:
     number_sections: true
     seq_numbering: true
@@ -18,6 +13,11 @@ output:
     keep_md: true
     toc: true
     pandoc_args: ["--filter", "pandoc-crossref", "-M", "eqnPrefix="]
+  bookdown::word_document2:
+    fig_caption: true
+    reference_docx: ./style/word-styles-02.docx
+    md_extensions: +east_asian_line_breaks
+    pandoc_args: ["--filter", "pandoc-crossref"]
   bookdown::pdf_document2:
     keep_tex: yes
     toc: false
@@ -258,9 +258,9 @@ $$Z(t)=[1(t\in D_1),\cdots,1(t\in D_L)]$$
 
 其中，L表示有 $L$ 个假日，$\boldsymbol k$ 是长度为 $L$ 的向量，并且假定 $k\sim Normal(0,\nu)$
 
-```{r tab-7, eval=T, echo=F, results='markup', cache=F}
-tab7 <- read.csv('./data/updata/holidays.csv')
-knitr::kable(tab7, row.names =F, align = "l", caption="holidays",
+```{r tab-1, eval=T, echo=F, results='markup', cache=F}
+tab1 <- read.csv('./data/updata/holidays.csv')
+knitr::kable(tab1, row.names =F, align = "l", caption="holidays",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
@@ -320,8 +320,55 @@ $$\begin{array}{l}
 列进行检验。利用拉格朗日乘子检验判断残差序列存在异方差后，尝试用 $GARCH$ 模型提取 
  $ARIMA(1,1,1)$ 残差平方序列中的相关信息。但所得结果显示模型对序列的自相关性拟合效
 果不理想。可能是由于残差序列中存在某些异常值，即 $ARIMA(1,1,1)$ 模型对某些值的拟合
-存在不充分的情况，从而导致残差过大。对此观察 $ARIMA(1,1,1)$ 的残差序列，见图 \@ref(fig:fig1)。
+存在不充分的情况，从而导致残差过大。对此观察 $ARIMA(1,1,1)$ 的残差序列，见图 \@ref(fig:fig-resid)。
 可以发现模型未对2018年10月10日和2018年10月15日的碳交易价格给予有效拟合，导致残差过大。
+
+```{r include=FALSE}
+library(tseries)
+library(FinTS)
+history=read.csv("./data/updata/guangdong2.csv")
+history$date=as.Date(history$date,"%Y/%m/%d")
+colnames(history)=c("ds","y","weekday")
+pp.test(history$y)
+dh=diff(history$y)
+pp.test(dh)
+
+##自相关
+par(mfrow=c(2,1)) 
+acf(dh,main="",xlab="滞后期",ylab="ACF")#画自相关图
+title(main = "(a)the ACF of dealprice",cex.main=0.95)
+pacf(dh,main="",xlab="滞后期",ylab="PACF",las=1)#画偏自相关图
+title(main="(b)the PACF of dealprice",cex.main=0.95)
+
+##模型拟合
+Box.test(dh,lag=10,type="Ljung")
+m1.1=arima(history$y,order=c(1,1,1))
+library(forecast)
+auto.arima(history$y)
+resid=m1.1$residuals
+
+which(abs(resid)>3)
+resid[431]
+resid0=resid[-434]
+Box.test(resid0,lag=10,type="Ljung")
+ArchTest(resid0,lag=12) 
+library(FinTS)
+ArchTest(resid,lag=12)  #存在ARCH效应
+
+par(mfrow=c(1,1))
+plot(resid)
+rt.square<-resid^2
+acf(rt.square,main="",xlab="lag(c)",ylab="ACF",las=1)#画自相关图
+title(main = "(c)the ACF of resi Square",cex.main=0.95)
+pacf(rt.square,main="",xlab="Lag(d)",ylab="PACF",las=1)#画偏自相关图
+title(main = "(d)the PACF of resi Square",cex.main=0.95)
+
+library(fGarch)
+help(package="fGarch")
+fit2.1=garchFit(formula = ~arma(1,1)+garch(1,1),data=dh,cond.dist = c("norm"))
+resid1=fit2.1@residuals
+plot(resid1)
+```
 
 进一步分析可以发现，是由于在2018年10月10日和2018年10月15日这两个时间点存在碳交易价格
 的突变，前者是价格由前一日的 $15.31$ 突降至2018年10月10日的 $9.80$ ;后者是由前一日的
@@ -332,21 +379,13 @@ $$\begin{array}{l}
 综合以上结果，本文利用 $ARIMA(1,1,1)$ 模型对未来10进行短期预测，预测结果显示未来10期碳
 交易价格水平处于21元以上，并呈现出一定的下降趋势。
 
-```{r tab-8, eval=T, echo=F, results='markup', cache=F}
-tab8 <- read.csv('./result/ARMA模型预测结果.csv')
-knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
-             digits=2,
+```{r arima, echo=FALSE, cache=F, results='markup'}
+ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
+arima=as.data.frame(predict(m1.1,n.ahead=10)$pred)
+arima=cbind(ds,arima)
+colnames(arima)=c("ds","arima")
+knitr::kable(arima, row.names =F, align = "l", caption="ARIMA预测表",
       longtable = TRUE, booktabs = TRUE, linesep  = "")
-```
-
-```{r fig2, out.width="100%", echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
-arma <- read.csv("./data/arima_result.csv",header = T,sep=",")
-par(mar=c(5,5,2,2)+0.1,oma=c(0,0,0,0))
-plot(arma$x,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",ylim = c(11,19),cex.lab=.8,cex.axis=.7)
-## points(Data[1:357,9],lty=2,type="b",pch=4)
-axis(1,at=c(1,50,100,150,200,250,300,350),labels = c("2017/1/4","2017/3/23","2017/6/9","2017/8/21","2017/11/6",
-                                                     "2018/1/7","2018/4/9","2018/6/21"),cex.axis=.7)
-legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
 ```
 
 ### 指数平滑法下的碳交易价格预测
@@ -376,70 +415,30 @@ $$S_t=0.8226Deal_{t-1}+0.1774S_{t-1}$$
 始预测值将保持一致。即需要不断更新实际值，否则只能做一期预测，得到相同的预测值。这同时
 也表明指数平滑法不适合做长期预测。
 
-图\@ref(fig:fig2)给出了上述两种方法 $ARIMA(1,1,1)$ 和一次指数平滑法的拟合情况，从
+图\@ref(fig:fig-resid)给出了上述两种方法 $ARIMA(1,1,1)$ 和一次指数平滑法的拟合情况，从
 残差图来看，两种方法的拟合效果十分相似，并且均不能迅速捕捉2018年10月10日和2018年10月15
 日的突变点信息。
 
 ```{r include=FALSE}
-library(tseries)
-pp.test(history$y)
-dh=diff(history$y)
-pp.test(dh)
-
-##自相关
-par(mfrow=c(2,1)) 
-acf(dh,main="",xlab="滞后期",ylab="ACF")#画自相关图
-title(main = "(a)the ACF of dealprice",cex.main=0.95)
-pacf(dh,main="",xlab="滞后期",ylab="PACF",las=1)#画偏自相关图
-title(main="(b)the PACF of dealprice",cex.main=0.95)
-
-##模型拟合
-Box.test(dh,lag=10,type="Ljung")
-m1.1=arima(history$y,order=c(1,1,1))
-resid=m1.1$residuals
-auto.arima(history$y)
-which(abs(resid)>3)
-resid[431]
-resid0=resid[-434]
-Box.test(resid0,lag=10,type="Ljung")
-ArchTest(resid0,lag=12) 
-library(FinTS)
-ArchTest(resid,lag=12)  #存在ARCH效应
-
-par(mfrow=c(1,1))
-plot(resid)
-rt.square<-resid^2
-acf(rt.square,main="",xlab="lag(c)",ylab="ACF",las=1)#画自相关图
-title(main = "(c)the ACF of resi Square",cex.main=0.95)
-pacf(rt.square,main="",xlab="Lag(d)",ylab="PACF",las=1)#画偏自相关图
-title(main = "(d)the PACF of resi Square",cex.main=0.95)
-
-library(fGarch)
-help(package="fGarch")
-fit2.1=garchFit(formula = ~arma(1,1)+garch(1,1),data=dh,cond.dist = c("norm"))
-resid1=fit2.1@residuals
-plot(resid1)
-
-library(forecast)
 fit2=ets(history$y)
-arima=predict(m1.1,n.ahead=10)$pred
-ets=predict(fit2,n.ahead=10)[["mean"]]
-pre=as.data.frame(cbind(arima,ets))
-ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
-pre=cbind(ds,pre)
-resid1=data.frame(history$ds,as.numeric(m1.1$residuals))
+
+ets=as.data.frame(predict(fit2,n.ahead=10)[["mean"]])
+pre=cbind(arima,ets)
+colnames(pre)=c("ds","arima","ets")
 fitvalue1=data.frame(history$ds,as.numeric(fitted(m1.1)))
 colnames(fitvalue1)=c("ds","value1")
-resid2=as.data.frame(as.numeric(fit2[["residuals"]]))
 value2=as.data.frame(as.numeric(fit2[["fitted"]]))
-resid=cbind(resid1,resid2)
-colnames(resid)=c("ds","arima","ets")
 fitvalue=cbind(fitvalue1,value2)
 colnames(fitvalue)=c("ds","arima","ets")
 value=rbind(fitvalue,pre)#将拟合值与预测值合并
+
+resid1=data.frame(history$ds,as.numeric(m1.1$residuals))
+resid2=as.data.frame(as.numeric(fit2[["residuals"]]))
+resid=cbind(resid1,resid2)
+colnames(resid)=c("ds","arima","ets")
 ```
 
-```{r fig-resid, echo=FALSE, fig.cap="mape", dev='png'}
+```{r fig-resid, echo=FALSE, fig.cap="residuals", dev='png'}
 plot(resid$arima,lty=1,type="b",pch=10,xlab="日期",ylab="residuals",xaxt="n",cex.lab=0.8,cex.axis=0.7)
 lines(resid$ets,lty=2,type="b",pch=5,col="red")
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
@@ -454,17 +453,14 @@ legend("topleft",c("arima","ets"),pch=c(10,5),lty=c(1,2),bty="n",cex=0.7)
 考虑不同时间段的趋势变化和季节效应。并且通过误差分析对模型质量进行判断，进而调整模
 型参数，最后利用所得最优模型对碳交易价格序列做10期预测。
 
-
 #### 模型拟合
 
 1. 作图观察序列特征
 
 ```{r echo=FALSE}
-guangdong2=read.csv("./data/updata/guangdong2.csv")
-guangdong2$weekday=factor(guangdong2$weekday)
+history$weekday=factor(history$weekday)
 library(ggplot2)
-head(guangdong2)
-ggplot(data=guangdong2,mapping=aes(x=guangdong2$date,y=guangdong2$dealprice,colour=guangdong2$weekday))+geom_point(size=2,ylim=c(11,20))
+ggplot(data=history,mapping=aes(x=history$ds,y=history$y,colour=history$weekday))+geom_point(size=2,ylim=c(11,20))
 ```
 
 观察上述序列，碳交易价格的时间序列呈现出一定的趋势性，在不同阶段有不同趋势特征，同时伴随周期
