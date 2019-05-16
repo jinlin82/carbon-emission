@@ -85,7 +85,7 @@ Sys.setlocale("LC_ALL", "Chinese")
 动预测理论领域已经涌现了丰硕的成果[@Hyndman2008;@Livera2011;@Taylor2018]。但现阶
 段国内对于自动预测方法的应用很少，对于在碳交易市场领域的应用则更少，但实现自动预
 测无疑是对碳市场交易人员的一大福音，所以本文基于当下文献中发现的不足以及市场的迫
-切需求开展本文的研究，重点针对碳交易价格的影响因素及预测问题作出具体分析。
+切需求开展本文的研究，重点针对碳交易价格的预测问题作出具体分析。
 
 # 碳排放交易市场与理论简介
 
@@ -114,8 +114,8 @@ Sys.setlocale("LC_ALL", "Chinese")
 ARMA模型和Prophet模型均为从碳交易价格自身的波动出发，根据碳交易价格的历史数据，
 分别基于历史数据的某种形态是具备一定的稳定性和时间序列可分解性的思想实现碳交易价
 格的预测。具体来看，ARMA模型是用碳交易价格作为因变量序列，用碳交易价格的向过去推
-若干期的时间序列作为自变量序列，用来拟合波动曲线，通过建立回归模型完成预测。对残
-差序列满足这两个假定—— $e_t$ 为随机序列，在不同时刻互不相关且 $e_t$ 与时序的观测
+若干期的时间序列作为自变量序列，来拟合波动曲线，通过建立回归模型完成预测。在残
+差序列满足以下两个假定—— $e_t$ 为随机序列，在不同时刻互不相关且 $e_t$ 与时序的观测
 值 $Y_{t+m}$ 不相关的前提下，建立线性回归模型：
 
 $$\phi(B)Y_t = \theta( B )e_t$$ {#eq:model2}
@@ -134,7 +134,7 @@ $$y(t)=g(t)+s(t)+h(t)+\epsilon_t$$ {#eq:model3}
 
 对于一般的时间序列，我们可以用ARIMA模型进行拟合并做出预测，但该模型不能有效地捕捉
 时间序列的周期性和假日效应，并且时间序列必须保持一定频率，对于缺失值一般需要插补，
-在拟合同时包含趋势性、周期性的时间序列时存在明显不足，prophet预测模型能够对有以
+在拟合同时包含趋势性、周期性的时间序列时存在明显不足。而prophet预测模型能够对有以
 上特征的时间序列做出很好的拟合，并且模型参数直观易解释，在预测时可以快速识别预测
 误差较大的部分，并做出相应调整。下面对prophet模型作出详细介绍。
 
@@ -158,14 +158,14 @@ $$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\epsilon_t$$n {#eq:model-prophet}
 通过定义突变点，线性模型的参数可以实现相应变化。
 
 假设在时间长度为T的序列中，时刻 $s_j(j=1,2,\cdots,S)$ 分布着突变点 $S$ 个 ,每个突变点
-都对应一定的增长率调整 $ \delta_t $ , 则 $t$ 时刻的增长率为 $k+\sum_{j:t\geq s_j}\delta_j$。
-若定义向量 $\boldsymbol a(t) \in {0,1}^S$ 和 $\boldsymbol \delta $ ，并且$\boldsymbol a(t)$ 
+都对应一定的增长率调整 $\delta_t$ , 则 $t$ 时刻的增长率为 $k+\sum_{j:t\geq s_j}\delta_j$。
+若定义向量 $\boldsymbol a(t) \in \{0,1\}^S$ 和 $\boldsymbol \delta$ ，并且$\boldsymbol a(t)$ 
 中的 $a_j(t)$ 为：
 
 $$a_j(t)=\left \{ \begin{array}{l} 1,\;\;t\geq s_j\\ 0,\;\;其他 \end{array} \right.$$ {#eq:model20}
 
 则 $t$ 时刻的增长率可以表示为 $k+\boldsymbol a(t)^T \boldsymbol\delta$ 。增长率发生变化，则
-截距项也会有相应的变化，$m$ 在第 $j$ 个突变点的调整为：
+截距项也需作出相应的变化，才能保证函数的连续性。相应地， $m$ 在第 $j$ 个突变点的调整为：
 
 $$\gamma_j=\left (s_j-m-\sum_{l<j}\gamma_l\right) \left (1-\frac{k+\sum_{l<j}\delta_l} {k+\sum_{l\leq j}\delta_l}\right)$$ {#eq:model21}
 
@@ -184,7 +184,7 @@ $$g{(t)}=\frac{C}{1 + exp(-k(t - m))}$$ {#eq:model23}
 
 $$g(t)=\frac{C(t)}{1 + exp(-(k+\boldsymbol a(t)^T\boldsymbol{\delta})(t - (m+\boldsymbol a(t)^T\boldsymbol\gamma))}$$ {#eq:model24}
 
-与式 [@eq:model24] 不同的是，我们假定容载量 $C(t)$ 不是参数，在模型构建时，需要结合实际
+与式 [@eq:model23] 不同的是，我们假定容载量 $C(t)$ 不是参数，在模型构建时，需要结合实际
 情况设定。
 
 #### 突变点的设置
@@ -196,7 +196,7 @@ $$g(t)=\frac{C(t)}{1 + exp(-(k+\boldsymbol a(t)^T\boldsymbol{\delta})(t - (m+\bo
 #### 趋势预测的不确定性
 
 预测的最大不确定性来源就在于未来趋势的不确定性。在prophet模型中，假定未来趋势的增长率为常数。
-通过将历史数据中的趋势特点运用至未来预测，并且假定未来突变点的平均调整频率和平均调整幅度与历史数
+通过将历史数据中的趋势特点运用至未来进行预测，并且假定未来突变点的平均调整频率和平均调整幅度与历史数
 据保持一致。对于突变点通过拉普拉斯 $Laplace(0,\tau)$ 分布产生的历史数据，在进行未来预测时，首先
 进行 $\tau$ 的推断，即用历史数据的方差代替，用字母 $\lambda$ 表示；然后是突变时点的设置，以如下方
 式进行：
@@ -247,9 +247,10 @@ $$\boldsymbol\beta=[a_1,b_1,a_2,b_2\cdots,a_N,b_N]^T$$
 该方法具体指的是提供所研究时间区域内的假日数据列表，包括历史数据和要预测的未来可能包括的假日，如表 \@ref(tab:tab-7) 
 所示。需要注意不同国家的节日日期可能不同。在拟合模型时，假定各假日的影响间保持独立，并且考虑了假日效应
 的持续性，即对于每个假日 $i$ ,相应地，有一个区间 $D_i$ ，该区间表示包含某假日在内的持续几天时间，并认为
-该期间具有相同的假日效应。具体设置通过参数 lower_window 和 upper_window 实现。lower_window是负数，表示
-某假日之前的天数，upper_window是正数，表示某假日之后的天数。如铁路运输量在清明节前后就会出现波动，而不
-只是在清明节当天，故可以设置lower_window=-1，upper_window=2。另外，还需设置示性函数和参数 $k_i$ ,示性
+该期间具有相同的假日效应。具体设置通过参数 $lower\_window$ 和 $upper\_window$ 实现。$lower\_window$ 
+是负数，表示
+某假日之前的天数， $upper\_window$ 是正数，表示某假日之后的天数。如铁路运输量在清明节前后就会出现波动，而不
+只是在清明节当天，故可以设置 $lower\_window=-1$ ， $upper\_window=2$ 。另外，还需设置示性函数和参数 $k_i$ ,示性
 函数用来表示所设置区间 $D_i$ 是否包含假日 $i$ ，$k_i$ 用来表示未来相应的改变。若用矩阵表示，则为：
 
 $$h(t)=Z(t)\boldsymbol k$$
@@ -257,9 +258,9 @@ $$Z(t)=[1(t\in D_1),\cdots,1(t\in D_L)]$$
 
 其中，L表示有 $L$ 个假日，$\boldsymbol k$ 是长度为 $L$ 的向量，并且假定 $k\sim Normal(0,\nu)$
 
-```{r tab-7, eval=T, echo=F, results='markup', cache=F}
-tab7 <- read.csv('./data/updata/holidays.csv')
-knitr::kable(tab7, row.names =F, align = "l", caption="holidays",
+```{r tab-1, eval=T, echo=F, results='markup', cache=F}
+tab1 <- read.csv('./data/updata/holidays.csv')
+knitr::kable(tab1, row.names =F, align = "l", caption="holidays",
              digits=2,
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
@@ -267,7 +268,7 @@ knitr::kable(tab7, row.names =F, align = "l", caption="holidays",
 ### 模型拟合
 
 对于序列的季节效应和假日效应，在实际构建模型时，需将其整合为矩阵 $X$ ,突变点 $a(t)$ 则用矩阵 $A$ 表示，
-得到最终 [@eq:model-prophet] 中的模型，具体实现代码见图 \@ref(fig:fig-code)
+得到最终 [@eq:model-prophet] 中的模型，具体实现代码见图 \@ref(fig:fig-code) 。
 
 ```{r fig-code, echo=FALSE, fig.cap='map', dev='png',results='markup'}
 knitr::include_graphics("./data/updata/code.png")
@@ -289,79 +290,184 @@ $\epsilon$ 和 $beta$ 也服从正态分布；$Laplace(0,\tau)$ 分布又称为 
 
 ## 碳交易价格预测分析
 
-前文已完成了影响因素的分析，而后我们将聚焦于需求端企业对于碳交易价格预测方面的需
-求。根据面板回归模型结果发现各因素对于碳交易价格影响存在横截面差异，但各影响因素
-的作用机理基本相似。所以本文选取全国第一大、世界第三大碳交易市场广东，作为国内碳
-交易价格交易的典型示范地区，进行后续碳交易价格预测的研究。
+前文已完成了prophet预测模型的理论分析，而后我们将聚焦于需求端企业对于碳交易价格预测
+方面的需求。本文将选取全国第一大、世界第三大碳交易市场广东，作为国内碳交易价格交易的
+典型示范地区，进行后续碳交易价格预测的研究。
 
+在对序列进行分析预测时，本文选择常用的时间序列分析方法，即基于 $ARIMA$ 模型的随机时序
+分析法和基于指数平滑法的确定分析法，然后再进行预测。最后选用本文的重点研究对象prophet
+预测模型进行预测。
 
 ### ARMA模型下的碳交易价格预测
 
-基于碳交易价格的历史波动，本文主要基于经典ARMA模型和Prophet模型对碳交易价格进行
-预测。首先进行ARMA模型的建立。对广东碳交易市场价格序列进行平稳性检验，在原假设为
-序列存在单位根的假设下，经结果表明ADF值为-3.8952，p值为0.0023,p值小于置信度水平
-5%，所以拒绝原假设，表明原始序列平稳。对平稳时间序列，为探究其自身价格变动的原因，
-进行自相关和偏自相关检验，结果显示自相关函数拖尾，偏自相关函数二阶截尾。我们建立
-模型为ARMA(2,0)。具体形式如下：
+本文首先对广东碳交易所价格序列进行平稳性检验，在原假设为序列不存在单位根的假设下，
+利用 $Phillips-Perron$ 检验统计量得到 $p-value$ 为0.06279，小于5%的置信度水平，所
+以没有充分理由拒绝原假设，得出原序列非平稳。故接下来使用ARIMA模型对碳交易价格序列
+进行拟合。进行一阶差分可得到平稳序列，对该平稳序列进行纯随机性检验，所得 $p$ 值为
+$0.003507$ ,表明需进行进一步的信息提取。通过平稳序列的自相关图和偏自相关图，初步
+设置$p$ 、 $q$ 的阶数为1或2，然后对得到的模型进行检验，结果显示只有 $ARIMA(1,1)$
+模型的残差序列为白噪声序列且 $AIC$ 值最小， $Ljung-Box$ 统计量对应的 $p$ 值为 $0.8396$ ,
+其余模型的残差序列仍留有相关信息。表明 $ARIMA(1,1)$ 模型对碳交易价格序列的自相关
+信息拟合得较为充分。用 $Deal_t$ 表示当期的碳交易价格，其具体形式如下：
 
 $$\begin{array}{l}
-Deal_t=14.14+0.59Deal_{t-1}+0.31Deal_{t-2}+\epsilon_t 	\\
-\quad \quad \quad \quad( 0.05) \quad \quad \quad (0.05)  \quad \quad \quad \quad  ( 0.36 ) 
+(1-0.6874B)(1-B)Deal_t=(1+0.8935B)\epsilon_t 	\\
+\quad \quad  (0.0520) \quad \quad \quad \quad  \quad \quad \quad \quad \quad  ( 0.0304 ) 
 \end{array}$$ {#eq:model7}
 
-为衡量模型的拟合优劣，对模型的残差进行正态性检验和自相关检验。应用残差的
-Shapiro-Wilk正态检验得到统计量值为W=0.9144,相对应的p值显著小于置信水平0.05,说明
-残差并不符合正态性的假定，结合Q-Q图分析发现，可能是由于原始序列存在异常值导致了
-正态假定无法通过。我们对模型进行AO,IO检验，结果显示2017/1/5、5/23、2018/3/29、
-6/13、6/28存在可加异常值，剔除可加异常值后发现2017/2/3存在新息异常值，对此我们建
-立新息异常回归。此时我们发现AIC值由758.62减少为615.75，且IO效应显著，系数显著，
-未发现新的异常值。进行Ljung-Box检验结果中 $Q=30.23$ ，p值等于0.17，所以没有证据
-拒绝误差项不相关的原假设，表明该模型拟合效果好。
+但上述检验并未考虑残差序列的同方差性是否满足，故接下来对 $ARIMA(1,1)$ 模型的残差序
+列进行检验。利用拉格朗日乘子检验判断残差序列存在异方差后，尝试用 $GARCH$ 模型提取 
+ $ARIMA(1,1,1)$ 残差平方序列中的相关信息。但所得结果显示模型对序列的自相关性拟合效
+果不理想。可能是由于残差序列中存在某些异常值，即 $ARIMA(1,1,1)$ 模型对某些值的拟合
+存在不充分的情况，从而导致残差过大。对此观察 $ARIMA(1,1,1)$ 的残差序列，见图 \@ref(fig:fig-resid)。
+可以发现模型未对2018年10月10日和2018年10月15日的碳交易价格给予有效拟合，导致残差过大。
 
-$$\begin{array}{l}
-Deal_t=14.11+0.79Deal_{t-1}+0.18Deal_{t-2}-1.60IO+\epsilon_t	\\
-\quad \quad \quad \quad (0.37) \quad \quad (0.05)  \quad \quad \quad( 0.05 ) \quad \quad \quad(0.46) 
-\end{array}$$ {#eq:model8}
+```{r include=FALSE}
+library(tseries)
+library(FinTS)
+history=read.csv("./data/updata/guangdong2.csv")
+history$date=as.Date(history$date,"%Y/%m/%d")
+colnames(history)=c("ds","y","weekday")
+pp.test(history$y)
+dh=diff(history$y)
+pp.test(dh)
 
-根据上述绘制出图 \@ref(fig:fig2) 发现，ARMA可加异常新息模型对于训练集样本拟合度
-非常高，对未来10进行短期预测，预测结果显示未来10期碳交易价格水平处于14元，并呈小幅度
-波动，处于平稳状态。
+##自相关
+par(mfrow=c(2,1)) 
+acf(dh,main="",xlab="滞后期",ylab="ACF")#画自相关图
+title(main = "(a)the ACF of dealprice",cex.main=0.95)
+pacf(dh,main="",xlab="滞后期",ylab="PACF",las=1)#画偏自相关图
+title(main="(b)the PACF of dealprice",cex.main=0.95)
 
-```{r tab-8, eval=T, echo=F, results='markup', cache=F}
-tab8 <- read.csv('./result/ARMA模型预测结果.csv')
-knitr::kable(tab8, row.names =F, align = "l", caption="ARMA模型预测结果",
-             digits=2,
+##模型拟合
+Box.test(dh,lag=10,type="Ljung")
+m1.1=arima(history$y,order=c(1,1,1))
+library(forecast)
+auto.arima(history$y)
+resid=m1.1$residuals
+
+which(abs(resid)>3)
+resid[431]
+resid0=resid[-434]
+Box.test(resid0,lag=10,type="Ljung")
+ArchTest(resid0,lag=12) 
+library(FinTS)
+ArchTest(resid,lag=12)  #存在ARCH效应
+
+par(mfrow=c(1,1))
+plot(resid)
+rt.square<-resid^2
+acf(rt.square,main="",xlab="lag(c)",ylab="ACF",las=1)#画自相关图
+title(main = "(c)the ACF of resi Square",cex.main=0.95)
+pacf(rt.square,main="",xlab="Lag(d)",ylab="PACF",las=1)#画偏自相关图
+title(main = "(d)the PACF of resi Square",cex.main=0.95)
+
+library(fGarch)
+help(package="fGarch")
+fit2.1=garchFit(formula = ~arma(1,1)+garch(1,1),data=dh,cond.dist = c("norm"))
+resid1=fit2.1@residuals
+plot(resid1)
+```
+
+进一步分析可以发现，是由于在2018年10月10日和2018年10月15日这两个时间点存在碳交易价格
+的突变，前者是价格由前一日的 $15.31$ 突降至2018年10月10日的 $9.80$ ;后者是由前一日的
+ $10.31$ 突升至2018年10月15日的 $15.14$ 。将这两处的残差看作异常点处理后，重新对残差
+序列进行同方差性检验，得出该序列不存在异方差性。这也说明 $ARIMA(1,1,1)$ 在正确描述时
+间序列中的突变情况方面，能力有所欠缺，但对于不存在突变点的序列能给予有效合理的拟合。
+
+综合以上结果，本文利用 $ARIMA(1,1,1)$ 模型对未来10进行短期预测，预测结果显示未来10期碳
+交易价格水平处于21元以上，并呈现出一定的下降趋势。
+
+```{r arima, echo=FALSE, cache=F, results='markup'}
+ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
+arima=as.data.frame(predict(m1.1,n.ahead=10)$pred)
+arima=cbind(ds,arima)
+colnames(arima)=c("ds","arima")
+knitr::kable(arima, row.names =F, align = "l", caption="ARIMA预测表",
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
 
-```{r fig2, out.width="100%", echo=F,fig.cap="ARMA模型预测效果图",dev="png",results='markup', cache=F}
-arma <- read.csv("./data/arima_result.csv",header = T,sep=",")
-par(mar=c(5,5,2,2)+0.1,oma=c(0,0,0,0))
-plot(arma$x,lty=1,type="b",pch=16,xlab="日期",ylab="碳价/元",xaxt="n",ylim = c(11,19),cex.lab=.8,cex.axis=.7)
-## points(Data[1:357,9],lty=2,type="b",pch=4)
-axis(1,at=c(1,50,100,150,200,250,300,350),labels = c("2017/1/4","2017/3/23","2017/6/9","2017/8/21","2017/11/6",
-                                                     "2018/1/7","2018/4/9","2018/6/21"),cex.axis=.7)
-legend("topright",c("预测值","真实值"),pch=c(16,4),lty=c(1,2),bty="n",cex=0.7)
+### 指数平滑法下的碳交易价格预测
+
+以上所用的ARIMA模型是对碳交易价格的差分平稳序列进行随机时序分析，但确定性分析方法
+由于操作简便，且易于解释，同样在时间序列的预测分析中有广泛应用。故本文接下来使用指数
+平滑法对碳交易价格序列进行拟合预测。
+
+指数平滑法通过给予过去数据逐渐减小的权数，将全部数据考虑在内，其权数随着数据的远离呈
+指数衰减至零。常用的指数平滑法根据时间序列呈现出的不同特征，在具体使用时可分为一次指
+数平滑法、二次指数平滑法和三次指数平滑法。一次指数平滑法适用于无长期趋势和季节效应的
+平稳序列；二次指数平滑法使用于只含有长期趋势的序列；最后一种平滑法则主要针对含有季节
+效应的序列。
+
+由于以上三种方法在具体使用时没有明确的分界，尤其是前两种。当波动较大，长期趋势变化幅度
+明显时，使用第一种方法并设置较大的平滑系数也能提高模型灵敏度，从而迅速捕捉数据变化。且
+在判断时间序列特征时大多是出于经验判断。故本文对碳交易价格序列分别使用以上所述三种指数
+平滑法进行模型拟合，最终根据AIC最小准则选择最好的模型为一次指数平滑法。具体形式如下：
+
+$$S_t=0.8226Deal_{t-1}+0.1774S_{t-1}$$
+
+其中，$S_t$ 表示 $t$ 时刻的平滑值；$Deal_{t-1}$ 表示 $t-1$ 时刻的实际值；$S_{t-1}$ 
+表示 $t-1$ 时刻的平滑值，$0.8226$ 即为平滑系数 $\alpha$ 。此处的平滑系数相对较大，表明
+碳交易价格序列保持了较为快速的变化，长期趋势变化幅度较大。
+
+在利用指数平滑法作预测时，由于从第二期开始，实际值将由上一期的平滑值代替，故从第二期开
+始预测值将保持一致。即需要不断更新实际值，否则只能做一期预测，得到相同的预测值。这同时
+也表明指数平滑法不适合做长期预测。
+
+图\@ref(fig:fig-resid)给出了上述两种方法 $ARIMA(1,1,1)$ 和一次指数平滑法的拟合情况，从
+残差图来看，两种方法的拟合效果十分相似，并且均不能迅速捕捉2018年10月10日和2018年10月15
+日的突变点信息。
+
+```{r include=FALSE}
+fit2=ets(history$y)
+
+ets=as.data.frame(predict(fit2,n.ahead=10)[["mean"]])
+pre=cbind(arima,ets)
+colnames(pre)=c("ds","arima","ets")
+fitvalue1=data.frame(history$ds,as.numeric(fitted(m1.1)))
+colnames(fitvalue1)=c("ds","value1")
+value2=as.data.frame(as.numeric(fit2[["fitted"]]))
+fitvalue=cbind(fitvalue1,value2)
+colnames(fitvalue)=c("ds","arima","ets")
+value=rbind(fitvalue,pre)#将拟合值与预测值合并
+
+resid1=data.frame(history$ds,as.numeric(m1.1$residuals))
+resid2=as.data.frame(as.numeric(fit2[["residuals"]]))
+resid=cbind(resid1,resid2)
+colnames(resid)=c("ds","arima","ets")
 ```
+
+```{r fig-resid, echo=FALSE, fig.cap="residuals", dev='png'}
+plot(resid$arima,lty=1,type="b",pch=10,xlab="日期",ylab="residuals",xaxt="n",cex.lab=0.8,cex.axis=0.7)
+lines(resid$ets,lty=2,type="b",pch=5,col="red")
+axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
+legend("topleft",c("arima","ets"),pch=c(10,5),lty=c(1,2),bty="n",cex=0.7)
+```
+
 
 ### Prophet模型下的碳交易价格预测
 
-本文首先对碳交易价格序列的特征进行判断，显示其不仅包含不同时间段的趋势变化，时间
-序列还呈现一定的周期性，对此，接下来选用R语言中的prophet预测模型对碳交易价格序列
-进行拟合，通过误差分析可以对模型质量进行判断，进而调整模型参数，最后利用所得最优
-模型对碳交易价格序列做10期预测。
-
+经过简单的分析可以发现， $ARIMA$ 和指数平滑法在描述广东省碳交易价格序列的突变性特
+征和只能作短期预测的不足，接下来选用R语言中的prophet预测模型对该序列进行拟合，综合
+考虑不同时间段的趋势变化和季节效应。并且通过误差分析对模型质量进行判断，进而调整模
+型参数，最后利用所得最优模型对碳交易价格序列做10期预测。
 
 #### 模型拟合
 
 1. 作图观察序列特征
 
 ```{r echo=FALSE}
+<<<<<<< HEAD
 history=read.csv("./data/updata/guangdong.csv")
 history$date=as.Date(history$date,"%Y/%m/%d")
 colnames(history)=c("ds","y")
 plot(history$y,type="p",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7)
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
+=======
+history$weekday=factor(history$weekday)
+library(ggplot2)
+ggplot(data=history,mapping=aes(x=history$ds,y=history$y,colour=history$weekday))+geom_point(size=2,ylim=c(11,20))
+>>>>>>> 78ae4411ebb02b923d7c1725230dff6510e5954a
 ```
 
 观察上述序列，碳交易价格的时间序列呈现出一定的趋势性，在不同阶段有不同趋势特征，同时伴随周期
