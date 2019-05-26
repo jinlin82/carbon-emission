@@ -1,6 +1,6 @@
 #############arima和ets的cross对象#################
 rm(list=ls())
-####1.切割点产生################
+####1切割点产生################
 generate_cutoffs <- function(df, horizon, initial, period) {
   # Last cutoff is (latest date in data) - (horizon).
   cutoff <- max(df$ds) - horizon
@@ -34,7 +34,7 @@ generate_cutoffs <- function(df, horizon, initial, period) {
   ))
   return(rev(result))
 }
-
+###################函数#########################################
 cross_validation2 <- function(
   a,model, horizon, units, period = NULL, initial = NULL) {
   df=model$history
@@ -70,3 +70,64 @@ etsperform=performance_metrics(etscrossday,rolling_window = 0.1)
 plot_cross_validation_metric(arimacrossday,metric = "mape",rolling_window =0.1)
 plot_cross_validation_metric(etscrossday,metric = "mape",rolling_window =0.1)
 plot_cross_validation_metric(crossday,metric = "mape",rolling_window =0.1)
+
+
+########################计算mape###############################
+rolling_mean_by_h <- function(x, h, w, name) {
+  # Aggregate over h
+  df <- data.frame(x=x, h=h)
+  df2 <- df %>%
+    dplyr::group_by(h) %>%
+    dplyr::summarise(mean = mean(x), n = dplyr::n())
+  
+  xm <- df2$mean
+  ns <- df2$n
+  hs <- df2$h
+  
+  res <- data.frame(horizon=c())
+  res[[name]] <- c()
+  # Start from the right and work backwards
+  i <- length(hs)
+  while (i > 0) {
+    # Construct a mean of at least w samples
+    n <- ns[i]
+    xbar <- xm[i]
+    j <- i - 1
+    while ((n < w) & (j > 0)) {
+      # Include points from the previous horizon. All of them if still less
+      # than w, otherwise just enough to get to w.
+      n2 <- min(w - n, ns[j])
+      xbar <- xbar * (n / (n + n2)) + xm[j] * (n2 / (n + n2))
+      n <- n + n2
+      j <- j - 1
+    }
+    if (n < w) {
+      # Ran out of horizons before enough points.
+      break
+    }
+    res.i <- data.frame(horizon=hs[i])
+    res.i[[name]] <- xbar
+    res <- rbind(res.i, res)
+    i <- i - 1
+  }
+  return(res)
+}
+
+
+mape <- function(df, w) {
+  ape <- abs((df$y - df$yhat) / df$y)
+  df$horizon <- df$ds - df$cutoff
+  df <- df[order(df$horizon),]
+  if (w < 0) {
+    return(data.frame(horizon = df$horizon, mape = ape))
+  }
+  return(rolling_mean_by_h(x = ape, h = df$horizon, w = w, name = 'mape'))
+}
+
+arimamape=mape(arimacrossday,66)
+prophetmape=mape(crossday,66)
+etsmape=mape(etscrossday,66)
+plot(etsmape,type="l",xlab="Horizon(days)",ylab="mape",ylim=c(0,0.2),lty=1)
+lines(prophetmape,type="l",lty=2)
+lines(arimamape,type="l",lty=3)
+legend("topright",c("arimamape","prophetmape","etsmape"),cex=0.7,lty=c(1,2,3),x.intersp=0.25,y.intersp=0.5)
