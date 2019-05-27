@@ -468,6 +468,29 @@ axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30"
 ## library(ggplot2)
 ## ggplot(data=history,mapping=aes(x=history$ds,y=history$y,colour=history$weekday))+geom_point(size=2,ylim=c(11,20))
 
+```{r eval=FALSE, include=FALSE}
+history=read.csv("./data/updata/guangdong2.csv")
+history1=history[,c(1,2)]
+history1$date=as.Date(history1$date,"%Y/%m/%d")
+colnames(history1)=c("ds","y")
+plot(history1$y,type="p",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7)
+axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
+```
+
+```{r eval=FALSE, include=FALSE}
+#prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
+#周期为5
+history2=read.csv("./data/updata/guangdong2.csv")
+colnames(history2)=c("ds","y","weekday")
+history2$ds=as.Date(history2$ds,"%Y/%m/%d")
+```
+
+
+```{r}
+#rm(list=ls())
+history2$weekday=factor(history2$weekday)
+library(ggplot2)
+ggplot(data=history2,mapping=aes(x=history2$ds,y=history2$y,colour=history2$weekday))+geom_point(size=2,ylim=c(11,20))
 ```
 
 观察上述序列，碳交易价格的时间序列呈现出一定的趋势性，在不同阶段有不同趋势特征，同时伴随周期
@@ -489,10 +512,10 @@ knitr::kable(tab9, row.names =F, align = "l", caption="参数设置表",
 值越大，产生突变点个数越多。本文在参数设置时均采用默认值。
 
 ```{r include=FALSE}
+#rm(list=ls())
 library(prophet)
-m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
-delta=as.data.frame(t(m31$params$delta))
-beta=as.data.frame(t(m31$params$beta))
+history=history2[,c(1,2)]
+#m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
 ```
 
 ```{r prophet-model, eval=FALSE, include=FALSE}
@@ -507,9 +530,15 @@ plot(history2,type="l")
 
 ## m <- prophet(weekly.seasonality=TRUE, changepoint.prior.scale = 0.005)
 
+```{r}
+
+#m <- prophet(weekly.seasonality=TRUE, changepoint.prior.scale = 0.005)
+
 m <- prophet(weekly.seasonality=FALSE, changepoint.prior.scale = 0.05)
-m <- add_seasonality(m, name='working', period=5, fourier.order=3)
-m <- fit.prophet(m, history2)
+m <- add_seasonality(m, name='weaking', period=5, fourier.order=3)
+m <- fit.prophet(m, history)
+delta=as.data.frame(t(m$params$delta))
+beta=as.data.frame(t(m$params$beta))
 
 future <- make_future_dataframe(m, periods = 90)
 forecast <- predict(m, future)
@@ -551,10 +580,11 @@ s\left( t \right) = X\left( t \right)\boldsymbol\beta
 本文以预测区间为 $H=90$ 对模型进行准确度判断，在 $2017-10-08$ 到 $2019-01-01$ 期间做了11次预测
 
 ```{r include=FALSE}
-crossday=cross_validation(m31,90,units="days")#运行时间略长
+crossday=cross_validation(m,90,units="days")#运行时间略长
+perform=performance_metrics(crossday,rolling_window = 0.1)
 ```
 
-```{r fig-metric, fig.cap="mape", dev='png', include=FALSE}
+```{r fig-metric, echo=FALSE, fig.cap="mape", dev='png'}
 plot_cross_validation_metric(crossday,metric = "mape",rolling_window =0.1)
 ```
 
@@ -566,9 +596,9 @@ plot_cross_validation_metric(crossday,metric = "mape",rolling_window =0.1)
 如表 \@ref(tab:predict) ,列出了未来10期的预测情况。
 
 ```{r predict, echo=FALSE, results='markup'}
-future31=make_future_dataframe(m31,periods = 10)
-forecast31=predict(m31,future31)
-forecast=forecast31[550:559,-(12:14)]
+future=make_future_dataframe(m,periods = 10)
+forecast=predict(m,future)
+forecast=forecast[550:559,-(12:14)]
 knitr::kable(forecast, row.names =F, align = "l", caption="predict",
       longtable = TRUE, booktabs = TRUE, linesep  = "")
 ```
@@ -580,7 +610,7 @@ knitr::kable(forecast, row.names =F, align = "l", caption="predict",
 yhat_upper 分别指预测值的95%置信区间下限和上限，其余预测值与此类似。
 
 ```{r predict1, echo=FALSE, fig.cap="mape", dev='png'}
-plot(m31,forecast31)
+plot(m,forecast)
 ```
 
 根据表 \@ref(tab:predict) 可以得到图 \@ref(fig:predict1) ,该图给出了历史数据、预测数据、模型
@@ -588,7 +618,7 @@ plot(m31,forecast31)
 置信区间内，表明模型效果良好。
 
 ```{r component, echo=FALSE, fig.cap="mape", dev='png'}
-prophet_plot_components(m31,forecast31)
+prophet_plot_components(m,forecast)
 ```
 
 图 \@ref(fig:component) 给出了碳交易价格的各组成部分的拟合情况，从第一张图可以看
