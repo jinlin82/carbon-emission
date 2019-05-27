@@ -145,7 +145,7 @@ $$y{(t)}=g{(t)}+s{(t)}+h{(t)}+\epsilon_t$$n {#eq:model-prophet}
 式中, $g{(t)}$ 用来对时间序列的非周期性即趋势性进行建模，$s{(t)}$表示周期性变化，
 如常见的周和季节性，$h{(t)}$ 表示假日效应，每个假日的时间在较短的时间范围内变动，
  $\epsilon_t$ 表示服从正态分布的误差项，其包含了其余不可控因素。
- 
+
 ### 趋势模型
 
 对于时间趋势的拟合，prophet模型有两种形式，一种是分段线性模型，一种是非线性的 $logistic$ 
@@ -298,16 +298,16 @@ $\epsilon$ 和 $beta$ 也服从正态分布；$Laplace(0,\tau)$ 分布又称为 
 分析法和基于指数平滑法的确定分析法，然后再进行预测。最后选用本文的重点研究对象prophet
 预测模型进行预测。
 
-### ARMA模型下的碳交易价格预测
+### ARIMA模型下的碳交易价格预测
 
 本文首先对广东碳交易所价格序列进行平稳性检验，在原假设为序列不存在单位根的假设下，
 利用 $Phillips-Perron$ 检验统计量得到 $p-value$ 为0.06279，小于5%的置信度水平，所
 以没有充分理由拒绝原假设，得出原序列非平稳。故接下来使用ARIMA模型对碳交易价格序列
 进行拟合。进行一阶差分可得到平稳序列，对该平稳序列进行纯随机性检验，所得 $p$ 值为
 $0.003507$ ,表明需进行进一步的信息提取。通过平稳序列的自相关图和偏自相关图，初步
-设置$p$ 、 $q$ 的阶数为1或2，然后对得到的模型进行检验，结果显示只有 $ARIMA(1,1)$
+设置$p$ 、 $q$ 的阶数为1或2，然后对得到的模型进行检验，结果显示只有 $ARIMA(1,1,1)$
 模型的残差序列为白噪声序列且 $AIC$ 值最小， $Ljung-Box$ 统计量对应的 $p$ 值为 $0.8396$ ,
-其余模型的残差序列仍留有相关信息。表明 $ARIMA(1,1)$ 模型对碳交易价格序列的自相关
+其余模型的残差序列仍留有相关信息。表明 $ARIMA(1,1,1)$ 模型对碳交易价格序列的自相关
 信息拟合得较为充分。用 $Deal_t$ 表示当期的碳交易价格，其具体形式如下：
 
 $$\begin{array}{l}
@@ -315,7 +315,7 @@ $$\begin{array}{l}
 \quad \quad  (0.0520) \quad \quad \quad \quad  \quad \quad \quad \quad \quad  ( 0.0304 ) 
 \end{array}$$ {#eq:model7}
 
-但上述检验并未考虑残差序列的同方差性是否满足，故接下来对 $ARIMA(1,1)$ 模型的残差序
+但上述检验并未考虑残差序列的同方差性是否满足，故接下来对 $ARIMA(1,1,1)$ 模型的残差序
 列进行检验。利用拉格朗日乘子检验判断残差序列存在异方差后，尝试用 $GARCH$ 模型提取 
  $ARIMA(1,1,1)$ 残差平方序列中的相关信息。但所得结果显示模型对序列的自相关性拟合效
 果不理想。可能是由于残差序列中存在某些异常值，即 $ARIMA(1,1,1)$ 模型对某些值的拟合
@@ -378,7 +378,7 @@ plot(resid1)
 综合以上结果，本文利用 $ARIMA(1,1,1)$ 模型对未来10进行短期预测，预测结果显示未来10期碳
 交易价格水平处于21元以上，并呈现出一定的下降趋势。
 
-```{r arima, echo=FALSE, cache=F, results='markup'}
+```{r arima-model, echo=FALSE, cache=F, results='markup'}
 ds=seq.Date(as.Date("2019/04/02"),as.Date("2019-04-11"),by="day")
 arima=as.data.frame(predict(m1.1,n.ahead=10)$pred)
 arima=cbind(ds,arima)
@@ -419,6 +419,7 @@ $$S_t=0.8226Deal_{t-1}+0.1774S_{t-1}$$
 日的突变点信息。
 
 ```{r include=FALSE}
+library(forecast)
 fit2=ets(history$y)
 
 ets=as.data.frame(predict(fit2,n.ahead=10)[["mean"]])
@@ -457,17 +458,16 @@ legend("topleft",c("arima","ets"),pch=c(10,5),lty=c(1,2),bty="n",cex=0.7)
 1. 作图观察序列特征
 
 ```{r echo=FALSE}
-<<<<<<< HEAD
 history=read.csv("./data/updata/guangdong.csv")
 history$date=as.Date(history$date,"%Y/%m/%d")
 colnames(history)=c("ds","y")
 plot(history$y,type="p",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab=0.8,cex.axis=0.7)
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
-=======
-history$weekday=factor(history$weekday)
-library(ggplot2)
-ggplot(data=history,mapping=aes(x=history$ds,y=history$y,colour=history$weekday))+geom_point(size=2,ylim=c(11,20))
->>>>>>> 78ae4411ebb02b923d7c1725230dff6510e5954a
+
+## history$weekday <- as.factor(history$weekday)
+## library(ggplot2)
+## ggplot(data=history,mapping=aes(x=history$ds,y=history$y,colour=history$weekday))+geom_point(size=2,ylim=c(11,20))
+
 ```
 
 观察上述序列，碳交易价格的时间序列呈现出一定的趋势性，在不同阶段有不同趋势特征，同时伴随周期
@@ -495,24 +495,34 @@ delta=as.data.frame(t(m31$params$delta))
 beta=as.data.frame(t(m31$params$beta))
 ```
 
-```{r eval=FALSE, include=FALSE}
+```{r prophet-model, eval=FALSE, include=FALSE}
 #prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
 #周期为5
 history2=read.csv("./data/updata/guangdong2.csv")
-history2$ds=as.Date(history2$ds,"%Y/%m/%d")
+history2$date=as.Date(history2$date,"%Y/%m/%d")
 
+history2 <- history2[,c(1,2)]
+names(history2) <- c("ds", "y")
+plot(history2,type="l")
 
-m <- prophet(weekly.seasonality=TRUE, changepoint.prior.scale = 0.005)
+## m <- prophet(weekly.seasonality=TRUE, changepoint.prior.scale = 0.005)
 
 m <- prophet(weekly.seasonality=FALSE, changepoint.prior.scale = 0.05)
 m <- add_seasonality(m, name='working', period=5, fourier.order=3)
 m <- fit.prophet(m, history2)
 
-future <- make_future_dataframe(m, periods = 30)
+future <- make_future_dataframe(m, periods = 90)
 forecast <- predict(m, future)
 plot(m, forecast)
 
 prophet_plot_components(m, forecast)
+
+df.cv <- cross_validation(m, initial = 200, period = 45, horizon = 90, units = 'days')
+head(df.cv)
+
+df.p <- performance_metrics(df.cv, rolling_window = 0.1)
+head(df.p)
+plot_cross_validation_metric(df.cv, metric = 'mape')
 
 ```
 
