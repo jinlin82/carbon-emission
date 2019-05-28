@@ -1,15 +1,22 @@
-#history2=read.csv("E:/github_repo/carbon-emission/data/updata/guangdong2.csv")
-#colnames(history2)=c("ds","y","weekday")
-#history2$ds=as.Date(history2$ds,"%Y/%m/%d")
-#library(prophet)
-#history=history2[,c(1,2)]
-#m <- prophet(weekly.seasonality=FALSE, changepoint.prior.scale = 0.05)
-#m <- add_seasonality(m, name='weaking', period=5, fourier.order=3)
-#m <- fit.prophet(m, history)
-#crossday=cross_validation(m,90,units="days")#运行时间略长
-#perform=performance_metrics(crossday,rolling_window = 0.1)
+#install.packages("here")
+library(here)
+path <- here()
+
+
+history2=read.csv(paste(path, "/data/updata/guangdong2.csv",sep = ""))
+colnames(history2)=c("ds","y","weekday")
+history2$ds=as.Date(history2$ds,"%Y/%m/%d")
+library(prophet)
+library(forecast)
+history=history2[,c(1,2)]
+m <- prophet(weekly.seasonality=FALSE, changepoint.prior.scale = 0.05)
+m <- add_seasonality(m, name='weaking', period=5, fourier.order=3)
+m <- fit.prophet(m, history)
+crossday=cross_validation(m,90,units="days")#运行时间略长
+perform=performance_metrics(crossday,rolling_window = 0.1)
+
 #############arima和ets的cross对象#################
-rm(list=ls())
+
 ####1切割点产生################
 generate_cutoffs <- function(df, horizon, initial, period) {
   # Last cutoff is (latest date in data) - (horizon).

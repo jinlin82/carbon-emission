@@ -475,7 +475,7 @@ plot(history1$y,type="p",pch=20,xlab="日期",ylab="碳价/元",xaxt="n",cex.lab
 axis(1,at=c(1,100,200,300,400,500),labels = c("2017/1/3","2017/6/5","2017/10/30","2018/3/27","2018/8/16","2019/1/15"),cex.axis=0.7)
 ```
 
-```{r eval=FALSE, include=FALSE}
+```{r include=FALSE}
 #prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
 #周期为5
 history2=read.csv("./data/updata/guangdong2.csv")
@@ -516,7 +516,7 @@ history=history2[,c(1,2)]
 #m31=prophet(history,yearly.seasonality = TRUE,weekly.seasonality=TRUE,daily.seasonality = FALSE)
 ```
 
-```{r prophet-model, eval=FALSE, include=FALSE}
+```{r prophet-model, eval=T, include=FALSE}
 #prophet默认weekly的period=7，history中星期六和星期日的数据分别只有一个，其余均是星期一到周期五，周末数据太少是否会影响模型结果，尝试用period=5,剔除星期六和星期二的数据是guangdong2
 #周期为5
 history2=read.csv("./data/updata/guangdong2.csv")
